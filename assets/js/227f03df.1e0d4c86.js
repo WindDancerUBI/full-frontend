@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfull_frontend=self.webpackChunkfull_frontend||[]).push([[6227],{5005:l=>{l.exports=JSON.parse('{"label":"hello","permalink":"/full-frontend/blog/tags/hello","allTagsPath":"/full-frontend/blog/tags","count":2}')}}]);
