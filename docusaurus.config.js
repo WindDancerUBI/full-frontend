@@ -19,7 +19,7 @@ const config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'WindDancerUBI', // Usually your GitHub org/user name.
-  projectName: 'full-front-end', // Usually your repo name.
+  projectName: 'full-frontend', // Usually your repo name.
   deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
