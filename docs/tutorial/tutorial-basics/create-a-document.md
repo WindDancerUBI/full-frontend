@@ -1,8 +1,10 @@
 ---
 sidebar_position: 2
+tags: 
+  - 演示
 ---
 
-# Create a Document
+# 创建一个文档
 
 Documents are **groups of pages** connected through:
 
@@ -35,7 +37,6 @@ sidebar_position: 3
 ---
 
 # Hello
-
 This is my **first Docusaurus document**!
 ```
 
