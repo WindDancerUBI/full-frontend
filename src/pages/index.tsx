@@ -1,3 +1,9 @@
+/*
+ * @Title: your project
+ * @Author: huangjitao
+ * @Date: 2023-03-28 20:53:41
+ * @Description: description of this file
+ */
 import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
@@ -17,7 +23,7 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/intro">
+            to="/docs/tutorial/intro">
             Docusaurus Tutorial - 5min ⏱️
           </Link>
         </div>
