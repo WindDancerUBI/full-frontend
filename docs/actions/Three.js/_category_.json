@@ -1,8 +1,8 @@
 {
-  "label": "CSS",
+  "label": "Three-action",
   "position": 2,
   "link": {
     "type": "generated-index",
-    "description": "CSS基础知识"
+    "description": "Three.js实战"
   }
 }

@@ -6,8 +6,8 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "前端知识库",
-  tagline: "研究、分享前端知识",
+  title: "Full-FrontEnd",
+  tagline: "学习、研究、分享前端知识",
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
@@ -68,7 +68,7 @@ const config = {
       // Replace with your project's social card
       image: "img/docusaurus-social-card.jpg",
       navbar: {
-        title: "My Site",
+        title: "Full-FrontEnd",
         logo: {
           alt: "My Site Logo",
           src: "img/logo.svg",
@@ -101,8 +101,16 @@ const config = {
             title: "Docs",
             items: [
               {
-                label: "Tutorial",
+                label: "教程",
                 to: "/docs/tutorial/intro",
+              },
+              {
+                label: "实战",
+                to: "/docs/actions/intro",
+              },
+              {
+                label: "博客",
+                to: "/docs/blog",
               },
             ],
           },
@@ -110,21 +118,21 @@ const config = {
             title: "Community",
             items: [
               {
-                label: "Stack Overflow",
-                href: "https://stackoverflow.com/questions/tagged/docusaurus",
+                label: "官网",
+                href: "https://www.winddancer.cn",
               },
               {
-                label: "Discord",
-                href: "https://discordapp.com/invite/docusaurus",
+                label: "掘金",
+                href: "https://juejin.cn/user/510590874301304",
               },
               {
-                label: "Twitter",
-                href: "https://twitter.com/docusaurus",
+                label: "哔哩哔哩",
+                href: "https://space.bilibili.com/258103180",
               },
             ],
           },
           {
-            title: "More",
+            title: "About",
             items: [
               {
                 label: "Blog",
@@ -132,12 +140,12 @@ const config = {
               },
               {
                 label: "GitHub",
-                href: "https://github.com/facebook/docusaurus",
+                href: "https://github.com/WindDancerUBI/full-frontend",
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Full-FrontEnd, Build by WindDancer.`,
       },
       prism: {
         theme: lightCodeTheme,

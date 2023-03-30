@@ -80,13 +80,13 @@ tags:
 
 盒子模型的宽度和高度是指内容区域的宽度和高度，但是如果给元素设置了内边距、边框或外边距，那么元素的实际宽度和高度会比内容区域的宽度和高度更大。默认模式的盒子模型如下图所示。
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/8e1bd64c-f093-4844-bd92-2b264fa632b6/Untitled.png)
+![1.png](./img/1.png)
 
 在 CSS 中，我们可以使用 box-sizing 属性来设置盒子模型的模式。默认情况下，box-sizing 属性的值为 content-box，表示元素的宽度和高度只包括内容区域的宽度和高度。如果将 box-sizing 属性的值设置为 border-box，那么元素的宽度和高度将包括内容区域、内边距和边框的宽度和高度，而外边距不会计入元素的宽度和高度。
 
 border-box模式的盒子模型如下图所示：
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/2a66423b-00fa-4e32-bc81-086993bee95f/Untitled.png)
+![2.png](./img/2.png)
 
 ### 2.2 解决元素宽度的问题
 
@@ -203,7 +203,7 @@ border-box模式的盒子模型如下图所示：
 
 但是这样做会导致父元素多出一个左内边距和右外边距！这个可以通过添加一个div包裹父元素，并设置该div的负外边距来解决。
 
-![截屏2023-03-16 16.21.49.png](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/68fcabb9-4dd7-4071-9b1e-f3a7bb1c7f02/%E6%88%AA%E5%B1%8F2023-03-16_16.21.49.png)
+![3.png](./img/3.png)
 
 1. **flex**布局：使用Flexbox实现两列等高布局。Flexbox默认会产生等高的元素。
 
@@ -227,7 +227,7 @@ border-box模式的盒子模型如下图所示：
 
 负外边距的具体行为取决于设置在元素的哪边。如果设置左边或顶部的负外边距，元素就会相应地向左或向上移动，导致元素与它前面的元素重叠，如果设置右边或者底部的负外边距，并不会移动元素，而是将它后面的元素拉过来。给元素底部加上负外边距并不等同于给它下面的元素顶部加上负外边距。
 
-![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/045d6f6a-d4c0-4b60-88fd-3454d1c838a0/Untitled.png)
+![4.png](./img/4.png)
 
 负外边距并不常用，但是在某些场景下很实用，尤其是当创建列布局的时候。不过应当避免频繁使用，不然网页的样式就会失控。
 
