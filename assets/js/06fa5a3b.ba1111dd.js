@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkfull_frontend=self.webpackChunkfull_frontend||[]).push([[3],{9696:l=>{l.exports=JSON.parse('{"label":"facebook","permalink":"/full-frontend/blog/tags/facebook","allTagsPath":"/full-frontend/blog/tags","count":1}')}}]);
