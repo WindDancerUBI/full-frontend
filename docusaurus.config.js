@@ -106,6 +106,11 @@ const config = {
             href: "https://github.com/WindDancerUBI/full-frontend",
             position: "right",
           },
+          {
+            label: "官网",
+            href: "https://www.winddancer.cn",
+            position: "right",
+          },
         ],
       },
       footer: {
