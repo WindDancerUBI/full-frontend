@@ -10,32 +10,29 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
+    title: '基础知识',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        在任何领域学习和成长，打好基础都是至关重要的。这也同样适用于计算机科学和编程领域。掌握基础知识是成为一名优秀的程序员的必经之路。
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
-    description: (
-      <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
-      </>
-    ),
-  },
-  {
-    title: 'Powered by React',
+    title: '实战',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        学习计算机科学和编程知识时，实战是非常重要的一部分。只有在实际编写代码和应用知识的情况下，才能真正掌握和理解知识。
+      </>
+    ),
+  },
+  {
+    title: '博客',
+    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    description: (
+      <>
+        在如今快速发展的数字时代，博客已经成为一个越来越重要的媒介。博客不仅仅是一个记录生活的平台，也是一个展示知识和经验的重要途径。
       </>
     ),
   },

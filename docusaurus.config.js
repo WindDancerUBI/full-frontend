@@ -71,7 +71,7 @@ const config = {
         title: "Full-FrontEnd",
         logo: {
           alt: "My Site Logo",
-          src: "img/logo.svg",
+          src: "img/logo-react.svg",
         },
         items: [
           {

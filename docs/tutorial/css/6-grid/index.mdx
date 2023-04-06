@@ -49,35 +49,46 @@ import TabItem from '@theme/TabItem';
 
 构建一个如上图所示的基础网格布局的代码如下:
 
-```html
-<!doctype html>
-<head>
-  <style>
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    grid-gap: 0.5em;
-  }
+```mdx-code-block
+<Tabs>
+<TabItem value="js" label="HTML">
+```
 
-  .grid > * {
-    background-color: darkgray;
-    color: white;
-    padding: 2em;
-    border-radius: 0.5em;
-  }
-  </style>
-</head>
-<body>
-  <div class="grid">
-    <div class="a">a</div>
-    <div class="b">b</div>
-    <div class="c">c</div>
-    <div class="d">d</div>
-    <div class="e">e</div>
-    <div class="f">f</div>
-  </div>
-</body>
+```html
+<div class="grid">
+  <div class="a">a</div>
+  <div class="b">b</div>
+  <div class="c">c</div>
+  <div class="d">d</div>
+  <div class="e">e</div>
+  <div class="f">f</div>
+</div>
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-gap: 0.5em;
+}
+
+.grid > * {
+  background-color: darkgray;
+  color: white;
+  padding: 2em;
+  border-radius: 0.5em;
+}
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
 ```
 
 跟Flexbox类似，网格布局也是作用于两级的DOM结构。设置为`display:grid`的元素成为一个网格容器（grid container）。它的子元素则变成网格元素（grid items）。
@@ -187,7 +198,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 ```mdx-code-block
 <Tabs>
-<TabItem value="js" label="JavaScript">
+<TabItem value="js" label="HTML">
 ```
 
 ```html
@@ -303,7 +314,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 ```mdx-code-block
 <Tabs>
-<TabItem value="js" label="JavaScript">
+<TabItem value="js" label="HTML">
 ```
 
 ```html
@@ -399,7 +410,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 ```mdx-code-block
 <Tabs>
-<TabItem value="js" label="JavaScript">
+<TabItem value="js" label="HTML">
 ```
 
 ```html
@@ -505,7 +516,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 ```mdx-code-block
 <Tabs>
-<TabItem value="js" label="JavaScript">
+<TabItem value="js" label="HTML">
 ```
 
 ```html
@@ -668,7 +679,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 ```mdx-code-block
 <Tabs>
-<TabItem value="js" label="JavaScript">
+<TabItem value="js" label="HTML">
 ```
 
 ```html
