@@ -88,13 +88,22 @@ const config = {
           },
           { to: "/blog", label: "博客", position: "left" },
           {
-            href: "https://github.com/WindDancerUBI/full-frontend",
-            label: "GitHub",
+            label: "镜像源",
             position: "right",
+            items: [
+              {
+                href: "https://winddancerubi.github.io/full-frontend/",
+                label: "GitHub Pages",
+              },
+              {
+                href: "https://winddancer.gitee.io/full-frontend",
+                label: "Gitee Pages",
+              },
+            ]
           },
           {
-            href: "https://winddancer.gitee.io/full-frontend",
-            label: "Gitee",
+            label: "GitHub",
+            href: "https://github.com/WindDancerUBI/full-frontend",
             position: "right",
           },
         ],
@@ -148,7 +157,7 @@ const config = {
                 href: "https://github.com/WindDancerUBI/full-frontend",
               },
               {
-                href: "https://winddancer.gitee.io/full-frontend",
+                href: "https://gitee.com/winddancer/full-frontend",
                 label: "Gitee",
               },
             ],
