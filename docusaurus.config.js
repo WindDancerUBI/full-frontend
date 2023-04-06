@@ -46,7 +46,7 @@ const config = {
         },
         blog: {
           showReadingTime: true,
-          readingTime: ({ content, frontMatter, defaultReadingTime }) => 
+          readingTime: ({ content, frontMatter, defaultReadingTime }) =>
             frontMatter.hide_reading_time
               ? undefined
               : defaultReadingTime({
@@ -90,6 +90,11 @@ const config = {
           {
             href: "https://github.com/WindDancerUBI/full-frontend",
             label: "GitHub",
+            position: "right",
+          },
+          {
+            href: "https://winddancer.gitee.io/full-frontend",
+            label: "Gitee",
             position: "right",
           },
         ],
@@ -141,6 +146,10 @@ const config = {
               {
                 label: "GitHub",
                 href: "https://github.com/WindDancerUBI/full-frontend",
+              },
+              {
+                href: "https://winddancer.gitee.io/full-frontend",
+                label: "Gitee",
               },
             ],
           },
