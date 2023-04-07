@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfull_frontend=self.webpackChunkfull_frontend||[]).push([[121],{8070:e=>{e.exports=JSON.parse('[{"label":"CSS","permalink":"/full-frontend/docs/tags/css","count":7}]')}}]);
