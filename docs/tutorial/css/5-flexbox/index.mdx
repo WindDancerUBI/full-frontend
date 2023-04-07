@@ -4,6 +4,10 @@ tags:
   - CSS
 ---
 
+import BrowserWindow from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # 五、FlexBox
 
 ## 1. FlexBox的原则
@@ -18,7 +22,12 @@ tags:
 
 ### 1.2 创建FlexBox布局
 
-使用flex布局可以很方便的创建一个菜单，菜单的html结构如下：
+使用flex布局可以很方便的创建一个菜单，菜单的html和css代码如下：
+
+```mdx-code-block
+<Tabs>
+<TabItem value="js" label="HTML">
+```
 
 ```html
 <nav>
@@ -34,7 +43,10 @@ tags:
 </nav>
 ```
 
-其css代码如下。需要进行弹性布局排列的元素是li，因此只需要给父元素ul设置为`display: flex` ，所有的字元素li将会默认从左到右进行排列。
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
 
 ```css
 .site-nav {
@@ -66,11 +78,22 @@ tags:
 }
 ```
 
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+需要进行弹性布局排列的元素是li，因此只需要给父元素ul设置为`display: flex` ，所有的字元素li将会默认从左到右进行排列。
+
 可以使用margin-left来给每个li元素设置间隔。最后一个li元素使用了`margin-left: auto` ，这时它将自动与最右边对齐，这个小技巧很实用。
 
 最终效果图如下所示：
 
+<BrowserWindow>
+
 ![Untitled](./img/1.png)
+
+</BrowserWindow>
 
 ## 2. 弹性子元素的大小
 
@@ -113,6 +136,11 @@ Flexbox的另一个重要功能是能够切换主副轴方向，用弹性容器�
 对于div这种块状元素来说，本身就会占据一行，貌似没有垂直排列的必要。但是对于一个使用flex进行左右布局后，左右区域里的div元素上下排列的最终效果可能会出乎意料。
 
 下面的代码要实现左右排列、并且右边区域的div元素使用默认形式垂直排列。
+
+```mdx-code-block
+<Tabs>
+<TabItem value="js" label="HTML">
+```
 
 ```html
 <main class="flex">
@@ -166,7 +194,12 @@ Flexbox的另一个重要功能是能够切换主副轴方向，用弹性容器�
 </main>
 ```
 
-```html
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
 .tile {
   padding: 1.5em;
   background-color: #fff;
@@ -190,13 +223,22 @@ Flexbox的另一个重要功能是能够切换主副轴方向，用弹性容器�
 }
 ```
 
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
 最终效果如下所示。按照flex的原则，左右区域的高度应该是相等的。实际上，确实是相等的，只是右边区域里的内容没有填满这个高度。为了解决这个问题，可以对右边区进行flex垂直布局。
+
+<BrowserWindow>
 
 ![Untitled](./img/7.png)
 
+</BrowserWindow>
+
 对上书css样式作如下修改，对右边区域做flex垂直布局，并设置每个字元素的flex-grow为1，这样两个子元素会均分最大高度。
 
-```html
+```css
 .tile {
   padding: 1.5em;
   background-color: #fff;
@@ -262,6 +304,19 @@ justify-content控制子元素在主轴方向的对齐方式，align-items则控
 
 FlexBox是css的一大进步，也是非常适合用来布局的。关于FlexBox的属性图解总结如下：
 
-![Untitled](./img/8.png)
-
-![Untitled](./img/9.png)
+| 属性 | 概念 | 图解 |
+| --- | --- | --- | 
+| flex-direction | 指定了主轴方向，副轴垂直于主轴 | ![](./img/8.png)|
+| flex-wrap | 指定了弹性子元素是否会在弹性容器内折行显示 | ![](./img/9.png)|
+| flex-flow | flex-direction flex-wrap的简写 |
+| justify-content | 控制子元素在主轴上的位置 | ![](./img/10.png)|
+| align-items | 控制子元素在副轴上的位置 | ![](./img/11.png)|
+| align-content | 如果开启了flex-wrap, align-content就会控制弹性子元素在副轴上的间距。如果子元素没有换行，就会忽略align-content | ![](./img/11.png)|
+| align-items | 控制子元素在副轴上的位置 | ![](./img/11.png)|
+| --- | --- | --- | 
+| flex-grow | 整数，指定增长因子，决定子元素在主轴方向扩展的大小，填充未使用的空间 | ![](./img/13.png)|
+| flex-shrink | 整数，指定收缩因子，决定子元素在主轴方向收缩的大小，防止溢出。开启了flex-wrap则会忽略该属性  | ![](./img/16.png)|
+| flex-basis | 指定子元素未受flex-grow或flex-shrink影响时的初始大小 | |
+| flex | flex-grow flex-shrink flex-basis的简写 | |
+| align-self | 控制子元素在副轴上的对齐方式。它会覆盖容器上的align-items。如果子元素副轴方向上的外边距为auto，则会忽略该属性 | ![](./img/14.png)|
+| order | 整数，将弹性子元素从兄弟节点中移动到指定位置，覆盖源码顺序 | ![](./img/15.png)|
