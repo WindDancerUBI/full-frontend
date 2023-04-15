@@ -47,14 +47,24 @@ export default function BrowserWindow({
 
 // Quick and dirty component, to improve later if needed
 export function IframeWindow({url}: {url: string}): JSX.Element {
-  console.log("url", url)
+  const origin = window.location.origin
+  let urlStr
+  if (url.includes("http") || url.includes("https")) {
+    urlStr = url
+  } else {
+    if (origin === "https://winddancerubi.github.io") {
+      urlStr = "https://winddancerubi.github.io" + url
+    } else {
+      urlStr = "https://winddancer.gitee.io" + url
+    }
+  }
   return (
-    <div style={{padding: 10}}>
+    <div>
       <BrowserWindow
-        url={url}
-        style={{minWidth: '40vw', maxWidth: 800}}
+        url={urlStr}
+        // style={{minWidth: '40vw', maxWidth: "100%"}}
         bodyStyle={{padding: 0}}>
-        <iframe src={url} title={url} style={{width: '100%', height: 500}} />
+        <iframe src={urlStr} title={urlStr} style={{width: '100%', height: 500}} />
       </BrowserWindow>
     </div>
   );

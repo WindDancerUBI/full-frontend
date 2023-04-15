@@ -1,0 +1,943 @@
+---
+sidebar_position: 8
+tags: 
+  - CSS
+---
+
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 八、响应式设计
+响应式布局是一种设计方法，可以使网站在不同设备上（如桌面电脑、平板电脑和手机）上呈现出不同的布局和样式，以适应不同的屏幕大小和分辨率。这种方法可以提高用户体验，因为它可以使网站在任何设备上都易于阅读和浏览，而不必放大或缩小内容。
+
+响应式布局遵循以下原则：
+
+- 移动优先。这意味着在实现桌面布局之前先构建移动版的布局。
+- 媒体查询。@media规则，可以为不同大小的视口定制样式。用这一语法，写的样式只在特定条件下才会生效。
+- 流式布局。这种方式允许容器根据视口宽度缩放尺寸。
+
+## 1. 移动优先
+
+响应式设计的第一原则就是移动优先（mobile first），顾名思义就是构建桌面版之前最好先构建移动端布局。这样才能更好的确保两个版本都美观可靠。
+
+:::info **为什么要先构建移动端布局？**
+1. 移动端布局一般是很朴素的设计。因此移动端设备能显示的内容远少于PC端。
+2. 移动版设计就是内容的设计。PC端中不重要的内容（例如侧边栏链接等）通常不会在移动端显示。
+:::
+
+
+因此先设计移动版布局，会把最重要、最通用的内容显示出来。然后就可以用“渐进增强”（progressive enhancement）的方式添加PC端的内容，为大屏用户增加体验。
+
+移动优先只是最佳实践，并不是一条铁律！
+
+### 1.1 实例：响应式网站-移动端布局
+
+接下来的例子将实现一个响应式布局的网站，它包含标题、导航栏、正文等内容。按照移动优先的原则，首先设计移动端的布局，最终效果如下图所示。在移动端中，导航栏链接的重要性不如正文，但是导航链接又不能完全不显示。通常会采用点击显示下拉列表的方式来设计导航栏链接。
+
+<IframeWindow url="/css-tutorial/8-responsive/mobile.html" />
+
+移动端布局的代码如下所示。代码比较常规，需要注意的有以下几点：
+
+1. 导航栏的样式初始设置为`display: none` 。点击时通过js代码`.classList.toggle` 来给导航栏添加或者删除类名`is-open` 。该类的样式为`display: none` ，这样就可以实现导航栏下拉列表的显示与隐藏。
+2. HTML中的meta标签`<meta name="viewport" content="width=device-width, initial-scale=1" />`告诉移动设备已经特意将网页适配了小屏设备。如果不加这个标签，移动浏览器会假定网页不是响应式的，并且会尝试模拟桌面浏览器，那之前的移动端设计就白做了。
+
+
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wombat Coffee Roasters</title>
+    <link rel="stylesheet" href="./mobile.css" />
+  </head>
+
+  <body>
+    <header id="header" class="page-header">
+      <div class="title">
+        <h1>Wombat Coffee Roasters</h1>
+        <div class="slogan">We love coffee</div>
+      </div>
+    </header>
+
+    <nav class="menu" id="main-menu">
+      <button class="menu-toggle" id="toggle-menu">toggle menu</button>
+      <div class="menu-dropdown">
+        <ul class="nav-menu">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Shop</a></li>
+          <li><a href="#">Menu</a></li>
+          <li><a href="#">Brew</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <aside id="hero" class="hero">
+      Welcome to Wombat Coffee Roasters! We are passionate about our craft,
+      striving to bring you the best hand-crafted coffee in the city.
+    </aside>
+
+    <main id="main">
+      <div class="row">
+        <section class="column">
+          <h2 class="subtitle">Single-origin</h2>
+          <p>
+            We have built partnerships with small farms around the world to
+            hand-select beans at the peak of season. We then carefully roast in
+            <a href="#">small batches</a>
+            to maximize their potential.
+          </p>
+        </section>
+        <section class="column">
+          <h2 class="subtitle">Blends</h2>
+          <p>
+            Our tasters have put together a selection of carefully balanced
+            blends. Our famous
+            <a href="#">house blend</a>
+            is available year round.
+          </p>
+        </section>
+        <section class="column">
+          <h2 class="subtitle">Brewing Equipment</h2>
+          <p>
+            We offer our favorite kettles, French presses, and pour-over cones.
+            Come to one of our <a href="#">brewing classes</a> to learn how to
+            brew the perfect pour-over cup.
+          </p>
+        </section>
+      </div>
+    </main>
+  </body>
+  <script src="./mobile.js"></script>
+</html>
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+:root {
+  box-sizing: border-box;
+  font-size: calc(1vw + 0.6em);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+/*
+* Links
+*/
+a:link {
+  color: #1476b8;
+  font-weight: bold;
+  text-decoration: none;
+}
+a:visited {
+  color: #1430b8;
+}
+a:hover {
+  text-decoration: underline;
+}
+a:active {
+  color: #b81414;
+}
+
+/*
+* Header section
+*/
+.page-header {
+  padding: 0.4em 1em;
+  background-color: #fff;
+}
+
+.title > h1 {
+  color: #333;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  margin: 0.2em 0;
+}
+
+.slogan {
+  color: #888;
+  font-size: 0.875em;
+  margin: 0;
+}
+
+/*
+* Hero image
+*/
+.hero {
+  padding: 2em 1em;
+  text-align: center;
+  background-image: url(coffee-beans.jpg);
+  background-size: 100%;
+  color: #fff;
+  text-shadow: 0.1em 0.1em 0.3em #000;
+}
+
+/*
+* Main section
+*/
+main {
+  padding: 1em;
+}
+
+.subtitle {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+}
+
+/*
+* Menu
+*/
+.menu {
+  position: relative;
+}
+
+.menu-toggle {
+  position: absolute;
+  top: -1.2em;
+  right: 0.1em;
+  border: 0;
+  background-color: transparent;
+  font-size: 3em;
+  width: 1em;
+  height: 1em;
+  line-height: 0.4;
+  text-indent: 5em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.menu-toggle::after {
+  position: absolute;
+  top: 0.2em;
+  left: 0.2em;
+  display: block;
+  content: '\2261';
+  text-indent: 0;
+}
+
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  left: 0;
+  margin: 0;
+}
+
+.menu.is-open .menu-dropdown {
+  display: block;
+}
+
+.nav-menu {
+  margin: 0;
+  padding-left: 0;
+  border: 1px solid #ccc;
+  list-style: none;
+  background-color: #000;
+  color: #fff;
+}
+
+.nav-menu > li + li {
+  border-top: 1px solid #ccc;
+}
+
+.nav-menu > li > a {
+  display: block;
+  padding: 0.8em 1em;
+  color: #fff;
+  font-weight: normal;
+}
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="js" label="JavaScript">
+```
+
+```js
+var menuButton = document.getElementById('toggle-menu');
+menuButton.addEventListener('click', function (event) {
+  event.preventDefault();
+  var menu = document.getElementById('main-menu');
+  menu.classList.toggle('is-open');
+});
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+    
+
+## 2. 媒体查询
+
+响应式设计的第二个原则是使用媒体查询。媒体查询（media queries）允许某些样式只在页面满足特定条件时才生效。这样就可以根据屏幕大小定制样式。
+
+媒体查询使用@media规则选择满足特定条件的设备，一条简单的媒体查询代码如下所示：
+
+```css
+@media screen and (min-width: 560px) {
+	// some styles
+}
+```
+
+### 2.1  **媒体特征**
+
+min-width、max-width等在前面代码里，它们被统称为媒体特征（media feature）。例如
+
+- `(min-height: 20em)`——匹配高度大于等于20em的视口。
+- `(max-height: 20em)`——匹配高度小于等于20em的视口。
+- `(orientation: landscape)`——匹配宽度大于高度的视口。
+- `(orientation: portrait)`——匹配高度大于宽度的视口。
+- `(min-resolution: 2dppx)`——匹配屏幕分辨率大于等于2dppx（dppx指每个CSS像素里包含的物理像素点数）的设备，比如视网膜屏幕。
+- `(max-resolution: 2dppx)`——匹配屏幕分辨率小于等于2dppx的设备。
+
+### 2.2 媒体类型
+
+常见的两种媒体类型是screen和print
+
+样式里不特定指明媒体类型的话，默认是screen。例如下面两个媒体查询类型是等价的。
+
+```css
+@media screen and (min-width: 560px) {
+	// some styles
+}
+
+@media (min-width: 560px) {
+	// some styles
+}
+```
+
+使用print媒体查询可以控制打印时的网页布局。@media print查询语句。不需要像min-width或者其他媒体特征那样加小括号，例如下面这段代码.
+
+```css
+@media print {
+  ＊ {
+    color: black ! important;
+    background: none ! important;
+  }
+}
+```
+
+### 2.3 给网页设置断点
+
+通常来说，移动优先的开发方式意味着最常用的媒体查询类型应该是min-width。在任何媒体查询之前，最先写的是移动端样式，然后设置越来越大的断点。例如：
+
+```css
+.title {
+}
+
+@media (min-width: 35em) {
+}
+
+@media (min-width: 50em) {
+}
+```
+
+有时候移动端的样式可能很复杂，在较大的断点里面需要花费较大篇幅去覆盖样式。此时需要将这些样式放在max-width媒体查询中，这样就只对较小的断点生效，但是用太多的max-width媒体查询也很有可能是没有遵循移动优先原则所致。
+
+### 2.4 实例：响应式网站-添加PC端布局
+
+接下来将改造之前的响应式网站，在已经写好的移动端布局上逐步添加PC端的内容和样式。最终结果如下图所示。
+
+<IframeWindow url="/css-tutorial/8-responsive/responsive.html" />
+
+:::caution 注意
+
+本届中展示的一些内容具有响应式，改变浏览器的宽度会呈现不同的布局！
+
+:::
+
+在本例中，PC端做的修改主要有以下几点：
+
+1. 导航栏链接的响应式布局：在PC端横向展开全部内容；在移动端隐藏全部内容，点击出现在下拉列表中。
+2. 字体和间距的自适应调整：PC端比移动端拥有更大的字号以及更大的元素间距。
+3. 内容排列方式的自适应调整：正文三个区域在PC端使用flex布局横向排列。在移动端使用块状元素纵向排列。
+
+实现这些功能的代码如下所示：
+
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
+```
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wombat Coffee Roasters</title>
+  <link rel="stylesheet" href="./responsive.css" />
+</head>
+
+<body>
+  <header id="header" class="page-header">
+    <div class="title">
+      <h1>Wombat Coffee Roasters</h1>
+      <div class="slogan">We love coffee</div>
+    </div>
+  </header>
+
+  <nav class="menu" id="main-menu">
+    <button class="menu-toggle" id="toggle-menu">
+      toggle menu
+    </button>
+    <div class="menu-dropdown">
+      <ul class="nav-menu">
+        <li><a href="#">About</a></li>
+          <li><a href="#">Shop</a></li>
+          <li><a href="#">Menu</a></li>
+          <li><a href="#">Brew</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <aside id="hero" class="hero">
+    Welcome to Wombat Coffee Roasters! We are
+    passionate about our craft, striving to bring you
+    the best hand-crafted coffee in the city.
+  </aside>
+
+  <main id="main">
+    <div class="row">
+      <section class="column">
+        <h2 class="subtitle">Single-origin</h2>
+        <p>We have built partnerships with small farms
+          around the world to hand-select beans at the
+          peak of season. We then carefully roast in
+          <a href="#">small batches</a>
+          to maximize their potential.</p>
+      </section>
+      <section class="column">
+        <h2 class="subtitle">Blends</h2>
+        <p>Our tasters have put together a selection of
+          carefully balanced blends. Our famous
+          <a href="#">house blend</a>
+          is available year round.</p>
+      </section>
+      <section class="column">
+        <h2 class="subtitle">Brewing Equipment</h2>
+        <p>We offer our favorite kettles, French
+          presses, and pour-over cones. Come to one of
+          our <a href="#">brewing
+          classes</a> to learn how to brew the perfect
+          pour-over cup.</p>
+      </section>
+    </div>
+  </main>
+</body>
+
+<script src="./responsive.js"></script>
+</html>
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+:root {
+  box-sizing: border-box;
+  font-size: calc(1vw + 0.6em);
+}
+
+@media (min-width: 50em) {
+  :root {
+    font-size: 1.125em;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+/*
+  * Links
+  */
+a:link {
+  color: #1476b8;
+  font-weight: bold;
+  text-decoration: none;
+}
+a:visited {
+  color: #1430b8;
+}
+a:hover {
+  text-decoration: underline;
+}
+a:active {
+  color: #b81414;
+}
+
+/*
+  * Header section
+  */
+.page-header {
+  padding: 0.4em 1em;
+  background-color: #fff;
+}
+
+@media (min-width: 35em) {
+  .page-header {
+    padding: 1em;
+  }
+}
+
+@media (min-width: 50em) {
+  .page-header {
+    padding: 1em 4em;
+  }
+}
+
+.title > h1 {
+  color: #333;
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  margin: .2em 0;
+}
+
+@media (min-width: 35em) {
+  .title > h1 {
+    font-size: 2.25rem;
+  }
+}
+
+.slogan {
+  color: #888;
+  font-size: 0.875em;
+  margin: 0;
+}
+
+/*
+  * Hero image
+  */
+.hero {
+  padding: 2em 1em;
+  text-align: center;
+  background-image: url(coffee-beans.jpg);
+  background-size: 100%;
+  color: #fff;
+  text-shadow: 0.1em 0.1em 0.3em #000;
+}
+
+@media (min-width: 35em) {
+  .hero {
+    padding: 5em 3em;
+    font-size: 1.2rem;
+  }
+}
+
+@media (min-width: 50em) {
+  .hero {
+    padding: 7em 6em;
+  }
+}
+
+/*
+  * Main section
+  */
+main {
+  padding: 1em;
+}
+
+@media (min-width: 35em) {
+  main {
+    padding: 2em 1em;
+  }
+}
+
+@media (min-width: 50em) {
+  main {
+    padding: 2em 4em;
+  }
+}
+
+.subtitle {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+}
+
+/*
+  * Menu
+  */
+.menu {
+  position: relative;
+}
+
+.menu-toggle {
+  position: absolute;
+  top: -1.2em;
+  right: 0.1em;
+  border: 0;
+  background-color: transparent;
+  font-size: 3em;
+  width: 1em;
+  height: 1em;
+  line-height: 0.4;
+  text-indent: 5em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.menu-toggle::after {
+  position: absolute;
+  top: 0.2em;
+  left: 0.2em;
+  display: block;
+  content: "\2261";
+  text-indent: 0;
+}
+
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  left: 0;
+  margin: 0;
+}
+
+.menu.is-open .menu-dropdown {
+  display: block;
+}
+
+@media (min-width: 35em) {
+  .menu-toggle {
+    display: none;
+  }
+
+  .menu-dropdown {
+    display: block;
+  }
+}
+
+.menu.is-open .menu-dropdown {
+  display: block;
+}
+
+/**
+  * Nav menu
+  */
+.nav-menu {
+  margin: 0;
+  padding-left: 0;
+  border: 1px solid #ccc;
+  list-style: none;
+  background-color: #000;
+  color: #fff;
+}
+
+.nav-menu > li + li {
+  border-top: 1px solid #ccc;
+}
+
+.nav-menu > li > a {
+  display: block;
+  padding: 0.8em 1em;
+  color: #fff;
+  font-weight: normal;
+}
+
+@media (min-width: 35em) {
+  .nav-menu {
+    display: flex;
+    position: static;
+    border: 0;
+    padding: 0 1em;
+  }
+
+  .nav-menu > li {
+    flex: 1;
+  }
+  .nav-menu > li + li {
+    border: 0;
+  }
+
+  .nav-menu > li > a {
+    padding: 0.3em;
+    text-align: center;
+  }
+}
+
+@media (min-width: 50em) {
+  .nav-menu {
+    padding: 0 4em;
+  }
+}
+
+/**
+  * Main columns
+  */
+@media (min-width: 35em) {
+  .row {
+    display: flex;
+    margin-left: -.75em;
+    margin-right: -.75em;
+  }
+
+  .column {
+    flex: 1;
+    margin-right: 0.75em;
+    margin-left: 0.75em;
+  }
+}
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="js" label="JavaScript">
+```
+
+```js
+var menuButton = document.getElementById('toggle-menu');
+menuButton.addEventListener('click', function(event) {
+  event.preventDefault();
+  var menu = document.getElementById('main-menu');
+  menu.classList.toggle('is-open');
+});
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+``` 
+
+## 3. 流式布局
+
+流式布局，有时被称作液体布局（liquid layout），指的是使用的容器随视口宽度而变化。它跟固定布局相反，固定布局的列都是用px或者em单位定义。固定容器（比如，设定了width: 800px的元素）在小屏上会超出视口范围，导致需要水平滚动条，而流式容器会自动缩小以适应视口。
+
+在流式布局中，主页面容器通常不会有明确宽度，也不会给百分比宽度，但可能会设置左右内边距，或者设置左右外边距为auto，让其与视口边缘之间产生留白。
+
+在主容器中，任何列都用百分比来定义宽度（比如，主列宽70%，侧边栏宽30%）。这样无论屏幕宽度是多少都能放得下主容器。用Flexbox布局也可以，设置弹性元素的flex-grow和flex-shrink（更重要），让元素能够始终填满屏幕。要习惯将容器宽度设置为百分比，而不是任何固定的值。
+
+### 3.1 流式布局的应用
+
+在上面响应式网站的例子中，正文内容在PC端使用了flex布局横向等比排列三个区域。这样就会随着设备的大小的改变，每个区域自适应调整自身宽度；
+
+对于移动端设备，就会将布局从flex调整为block，将三个区域纵向排列。这样就保证了内容在PC端和移动端都完美的展现。
+
+### 3.2 处理表格
+
+除了上述的应用外，流式布局还经常用在表格处理中。
+
+在移动设备的流式布局里，如果表格的列太多，很容易超过屏幕宽度。常规的解决方案有两种：
+
+1. 给表格每个列设置百分比。这样做可以将内容全部展示出来，但是每一列的数据会在垂直方向上被拉长。这样既不美观也不方便阅读。
+2. 给表格设置横向滚动条。这样做表格看起来不至于太丑，阅读每列的数据也不是太费劲。但是在移动端上，横向滚动滚动条是一个非常不友好的交互。
+
+最佳的方案是在移动设备上用别的方式组织数据。比如将每一行数据单独用一块区域展示，通常做法是将表格强制显示为一个普通的块级元素。例如下面这样展示表格数据。
+
+<IframeWindow url="/css-tutorial/8-responsive/table.html" />
+
+代码实现如下：
+
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
+```
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Responsive table example</title>
+  <link rel="stylesheet" href="./table.css" />
+</head>
+
+<body>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Country</th>
+        <th>Region/Farm</th>
+        <th>Tasting notes</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Nicaragua</td>
+        <td>Matagulpa</td>
+        <td>Dark chocolate, almond</td>
+        <td>$13.95</td>
+      </tr>
+      <tr>
+        <td>Ethiopia</td>
+        <td>Yirgacheffe</td>
+        <td>Sweet tea, blueberry</td>
+        <td>$15.95</td>
+      </tr>
+      <tr>
+        <td>Ethiopia</td>
+        <td>Nano Challa</td>
+        <td>Tangerine, jasmine</td>
+        <td>$14.95</td>
+      </tr>
+    </tbody>
+  </table>
+
+</body>
+</html>
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+table {
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid black;
+  padding: 0.3em 0.5em;
+}
+
+table {
+  width: 100%;
+}
+
+@media (max-width: 30em) {
+  table, thead, tbody, tr, th, td {
+    display: block;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    margin-bottom: 1em;
+  }
+}
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+``` 
+
+## 4. 响应式图片
+
+在响应式设计中，图片需要特别关注。不仅要让图片适应屏幕，还要考虑移动端用户的带宽限制。PC端可以使用高分辨率的图片，而在移动端这就显得很没必要了。
+
+### 4.1 不同视口大小使用不同的图片
+
+响应式图片的最佳实践是为一个图片创建不同分辨率的副本。如果用媒体查询能够知道屏幕的大小，就不必发送过大的图片，不然浏览器为了适配图片也会将其缩小。比如下面这段代码使用响应式技术给不同屏幕尺寸提供最合适的图片。
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Responsive image example</title>
+  <style>
+    .image {
+      padding: 2em 1em;
+      text-align: center;
+      background-image: url(coffee-beans-small.jpg);
+      background-size: 100%;
+      color: #fff;
+      text-shadow: 0.1em 0.1em 0.3em #000;
+    }
+
+    @media (min-width: 35em) {
+      .image {
+        padding: 5em 3em;
+        font-size: 1.2rem;
+        background-image: url(coffee-beans-medium.jpg);
+      }
+    }
+
+    @media (min-width: 50em) {
+      .image {
+        padding: 7em 6em;
+        background-image: url(coffee-beans.jpg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div alt="A white coffee mug on a bed of coffee beans" class="image">
+</body>
+</html>
+```
+
+在不同屏幕的浏览器上加载这样的网页，根本看不出有什么区别。这就是关键所在。在小断点下，屏幕尺寸不够宽，反正显示不了完整分辨率的图，但是能节省流量。
+
+<IframeWindow url="/css-tutorial/8-responsive/image.html" />
+
+### 4.2 使用srcset提供对应的图片
+
+媒体查询能够解决用CSS加载图片的问题。HTML里的`<img>`标签有另一个重要的解决方法：srcset属性（“source set”的缩写）。
+
+这个属性是HTML的一个较新的特性。它可以为一个`<img>`标签指定不同的图片URL，并指定相应的分辨率。浏览器会根据自身需要决定加载哪一个图片。代码如下所示：
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Responsive image example</title>
+  <style>
+    img {
+      max-width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <img alt="A white coffee mug on a bed of coffee beans"
+       src="coffee-beans-small.jpg"
+       srcset="coffee-beans-small.jpg 560w,
+               coffee-beans-medium.jpg 800w,
+               coffee-beans.jpg 1280w">
+
+</body>
+</html>
+```
+
+效果如下图所示：
+
+<IframeWindow url="/css-tutorial/8-responsive/image-srcset.html" />
+
+
