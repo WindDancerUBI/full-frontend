@@ -47,16 +47,11 @@ export default function BrowserWindow({
 
 // Quick and dirty component, to improve later if needed
 export function IframeWindow({url}: {url: string}): JSX.Element {
-  const origin = window.location.origin
   let urlStr
   if (url.includes("http") || url.includes("https")) {
     urlStr = url
   } else {
-    if (origin === "https://winddancerubi.github.io") {
-      urlStr = "https://winddancerubi.github.io" + url
-    } else {
-      urlStr = "https://winddancer.gitee.io" + url
-    }
+    urlStr = "https://winddancer.gitee.io" + url
   }
   return (
     <div>
