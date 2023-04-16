@@ -1,0 +1,422 @@
+---
+sidebar_position: 9
+tags: 
+  - CSS
+---
+
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+
+# 九、背景、阴影和混合模式
+
+一个网站，从看起来还可以，到看起来非常棒，差别在于细节。要实现这些细节，CSS中那些需要艺术创意的部分就派上用场了。
+
+## 1. 渐变
+
+渐变可以为网页增加立体感。因为真实世界中不存在单一颜色的物体，合理使用渐变可以使得网页更生动。
+
+background属性不仅仅是添加背景图片的作用，实际上，它是以下八个属性的简写。
+
+- **background-image**——指定一个文件或者生成的颜色渐变作为背景图片。
+- **background-position**——设置背景图片的初始位置。
+- **background-size**——指定元素内背景图片的渲染尺寸。
+- **background-repeat**——决定在需要填充整个元素时，是否平铺图片。
+- **background-origin**——决定背景相对于元素的边框盒、内边距框盒（初始值）或内容盒子来定位。
+- **background-clip**——指定背景是否应该填充边框盒（初始值）、内边距框盒或内容盒子。
+- **background-attachment**——指定背景图片是随着元素上下滚动（初始值），还是固定在视口区域。注意，使用fixed值会对页面性能产生负面影响。
+- **background-color**——指定纯色背景，渲染到背景图片下方。
+
+使用**background-image**可以实现渐变效果。渐变是一种非常有用的特效，它本质上也是背景图片，渐变本身不会影响元素的大小。
+
+### 1.1 线性渐变
+
+线性渐变是从元素的一端开始，沿着直线过渡到另一端。常见的几种线性渐变的效果如下图所示：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/linear-gradient" />
+
+代码如下所示：
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+    .container {
+      width: 400px;
+      max-width: 100%;
+      margin: 1em auto;
+    }
+    .linear-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: linear-gradient(to right, white, blue);
+    }
+    .multiple-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: linear-gradient(90deg, red 0%, white 50%, blue 100%);
+    }
+    .fringe-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: linear-gradient(90deg, red 40%, white 40%, white 60%, blue 60%);
+    }
+    .repeat-gradient {
+      height: 20px;
+      width: 100%;
+      background-image: repeating-linear-gradient(-45deg, #57b, #57b 10px, #148 10px, #148 20px);
+      border-radius: 0.3em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p>基础渐变：</p>
+    <div class="linear-gradient"></div>
+    <p>多个颜色节点的渐变：</p>
+    <div class="multiple-gradient"></div>
+    <p>条纹渐变：</p>
+    <div class="fringe-gradient"></div>
+    <p>重复渐变：</p>
+    <div class="repeat-gradient"></div>
+  </div>
+</body>
+```
+
+**基础渐变**
+
+使用`linear-gradient` 可以定义一个线性渐变。它使用三个参数来定义行为：角度、起始颜色和终止颜色。
+
+这里的角度值是`to right`，意思是渐变从元素的左侧开始（这里是白色），平滑过渡到右侧（这里是蓝色）。当然也可以使用更确切的单位（比如度），因此`to right`和`90deg`是等价的。
+
+起始颜色和终止颜色的值和其它地方颜色值的用法是一致的，可以使用hex、rbga等。
+
+```css
+background-image: linear-gradient(to right, white, blue);
+```
+
+**多个颜色节点的渐变**
+
+大部分渐变只需要两个颜色，从一个颜色过渡到另一个。也可以定义包含多个颜色的渐变，其中每个颜色可以称为一个颜色节点。
+
+一个渐变可以接受任意数量的颜色节点，节点之间通过逗号分隔。渐变会自动均匀地平铺这些颜色节点。也可以在渐变函数中为每个颜色节点明确指定位置。指定位置的值可以使用百分比也可以使用像素px。
+
+```css
+background-image: linear-gradient(90deg, red 0%, white 50%, blue 100%);
+```
+
+**条纹渐变**
+
+如果在同一个位置设置两个颜色节点，那么渐变会直接从一个颜色变换到另一个，而不是平滑过渡。
+
+```css
+background-image: linear-gradient(90deg, red 40%, white 40%, white 60%, blue 60%);
+```
+
+**重复渐变**
+
+使用`repeating-linear-gradient`可以实现重复渐变的效果。此函数和函数linear-gradient的效果基本相同，唯一的区别就是前者会重复。
+
+对于重复渐变，最好使用特定的长度而不是百分比，因为设置的值决定了要重复的图片大小。
+
+```css
+background-image: repeating-linear-gradient(-45deg, #57b, #57b 10px, #148 10px, #148 20px);
+```
+
+### 1.2 径向渐变
+
+径向渐变是从一个点开始，全方位向外扩展。常见的几种径向渐变的效果如下图所示：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/radial-gradient" />
+
+代码如下所示：
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+    .container {
+      width: 400px;
+      max-width: 100%;
+      margin: 1em auto;
+    }
+    .radial-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: radial-gradient(white, blue);
+    }
+    .circle-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: radial-gradient(circle, white, blue);
+    }
+    .corner-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: radial-gradient(3em at 25% 25%, white, blue);
+    }
+    .multiple-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: radial-gradient(circle, blue 0%, white 50%, red 100%);
+      border-radius: 0.3em;
+    }
+    .repeat-gradient {
+      height: 200px;
+      width: 100%;
+      background-image: repeating-radial-gradient(circle, blue 0, blue 1em, white 1em, white 2em);
+      border-radius: 0.3em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p>基础渐变：</p>
+    <div class="radial-gradient"></div>
+    <p>圆形渐变：</p>
+    <div class="circle-gradient"></div>
+    <p>边缘扩散渐变：</p>
+    <div class="corner-gradient"></div>
+    <p>多个颜色节点渐变：</p>
+    <div class="multiple-gradient"></div>
+    <p>重复渐变：</p>
+    <div class="repeat-gradient"></div>
+  </div>
+</body>
+```
+
+**基础渐变**
+
+使用`radial-gradient` 可以定义一个径向渐变。它使用二个参数来定义行为：起始颜色和终止颜色。
+
+渐变整体呈椭圆形，跟随元素大小进行变化。较宽的元素，其径向渐变也较宽，反之亦然。
+
+```css
+background-image: radial-gradient(white, blue);
+```
+
+**圆形渐变**
+
+在第一个参数处添加`circle`关键词。可以使渐变是圆形，
+
+```css
+background-image: radial-gradient(circle, white, blue);
+```
+
+**边缘扩散渐变**
+
+渐变默认的起点是中心点。但可以再第一个参数重指定起点的位置
+
+```css
+background-image: radial-gradient(3em at 25% 25%, white, blue);
+```
+
+**多个颜色节点渐变**
+
+跟线性渐变一样，径向渐变同样支持颜色节点。你可以提供多个节点，使用百分比或者长度单位指定节点位置。
+
+```css
+background-image: radial-gradient(circle, blue 0%, white 50%, red 100%);
+```
+
+**重复渐变**
+
+使用`repeating-radial-gradient`函数可以重复生成图样，形成同心圆环。
+
+```css
+background-image: repeating-radial-gradient(circle, blue 0, blue 1em, white 1em, white 2em);
+```
+
+## 2. 阴影
+
+阴影是另一种可以为网页增加立体感的特效。有两个属性可以创建阴影，`box-shadow`可以为元素盒子生成阴影，`text-shadow`可以为渲染后的文字生成阴影。
+
+### 2.1 shadow的拟物化
+
+默认情况下，阴影与元素的大小和尺寸相同。如果元素设置了`border-radius`，那么阴影相应地也会有圆角。
+
+一个简单的阴影效果代码如下所示：
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+  .button {
+    padding: 1em;
+    border: 0;
+    font-size: 0.8rem;
+    color: white;
+    border-radius: 0.5em;
+    background-image: linear-gradient(to bottom, #57b, #148);
+    box-shadow: 0.1em 0.1em 0.5em 0.2em #124;
+  }
+  .button:active {
+    box-shadow: inset 0 0 0.5em #124, inset 0 0.5em 1em rgba(0,0,0,0.4);
+  }
+  </style>
+</head>
+<body>
+  <button class="button">Sign up now</button>
+</body>
+```
+
+它的参数分别是：阴影的水平偏移量（x）、垂直偏移量（y）、模糊半径、扩展半径、颜色。效果如下图所示：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/simulant-shadow" />
+
+以上使用了渐变和阴影，使得按钮更具立体感。按钮点击时，移除了阴影效果，取而代之的是在按钮的边框内出现了内阴影。这样按钮就有了一种被摁下的感觉，就仿佛用户真的在网页上按压按钮。
+
+### 2.2 shadow的扁平化
+
+扁平化设计讲究色彩明快统一、外观简洁明了，这就意味着尽量少使用渐变、阴影和圆角。扁平化设计并不是说完全不用这些特效，用还是要用的，但要用得巧用得妙。
+
+对上面的拟物化代码修改如下：
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+    .button {
+      padding: 0.8em;
+      border: 0;
+      font-size: 1rem;
+      color: white;
+      border-radius: 0.5em;
+      background-color: #57b;
+      box-shadow: 0 0.4em #148;
+      text-shadow: 1px 1px #148;
+    }
+    .button:active {
+      background-color: #456ab5;
+      transform: translateY(0.1em);
+      box-shadow: 0 0.3em #148;
+    }
+    .button:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <button class="button">Sign up now</button>
+</body>
+```
+
+效果如下图所示：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/flat-shadow" />
+
+相比较于拟物化风格，扁平化风格的按钮颜色信息、阴影信息更少。这里的按钮以一种不同的方式使用box-shadow，不是叠加一个模糊效果的阴影，而是保持阴影边缘清晰。这样看起来也很生动。
+
+## 3. 混合模式
+
+大部分情况下，不论是使用真正的图片还是渐变，元素一般只会使用一张背景图片。但某些情况下你可能想要使用两张或者更多的背景图片。
+
+使用多个背景图片时，列表中排在前面的图片会渲染到排序靠后的图片上面。一般是希望后面的图片也可以透视显示。这时就可以使用**混合模式（blend mode）。**
+
+混合很像PS、AI等设计软件中的图层叠加类，比如变亮、颜色加深、正片叠底这些。它的用处有如下几点：
+
+- 使用某种颜色或者渐变为图片着色；
+- 为图片添加纹理效果，比如划痕或者老胶片放映时的颗粒感等；
+- 缓和、加深或者减小图片的对比度，使图片上的文字更具可读性；
+- 在图片上覆盖了一条文字横幅，但是还想让图片完整显示。
+
+### 3.1 为图片着色
+
+通过使用混合模式，我们可以把一张全彩色图片着色成单一色相的图片。效果如下图所示：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/blend-color" />
+
+实现该效果的代码如下，使用`background-blend-mode`不仅仅合并多个背景图片，还会合并background-color。所有这些叠放的图层，最终都会被混合模式拼合在一起
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+.blend {
+    min-height: 400px;
+    background-image: url("bear.jpg");
+    background-color: #148;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-blend-mode: luminosity;
+}
+  </style>
+</head>
+<body>
+  <div class="blend"></div>
+</body>
+```
+
+### 3.2 为图片添加纹理
+
+混合模式的另一个应用场景就是为图片添加纹理效果。比如你有一张富有现代气息的清晰图片，但有想改变它的风格，想带点噪点看起来有陈旧感。
+
+这种类型的效果可以通过对比混合模式overlay、hard-light或soft-light来实现。比如下面这样的效果：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/blend-texture" />
+
+实现的代码如下所示，纹理图片以重复平铺的方式覆盖在大熊图片上方。
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+.blend {
+  min-height: 400px;
+  background-image: url("scratches.png"), url("bear.jpg");
+  background-size: 200px, cover;
+  background-repeat: repeat, no-repeat;
+  background-position: center center;
+  background-blend-mode: soft-light;
+}
+  </style>
+</head>
+<body>
+  <div class="blend"></div>
+</body>
+```
+
+<aside>
+💡 soft-light模式对于暗色系纹理图片效果很好，而hard-light和overlay模式更适用于亮色的纹理图片。
+
+</aside>
+
+### 3.3 为图像添加横幅
+
+虽然background-blend-mode属性可以实现多张图片的混合，但只能局限于元素的背景颜色或者背景图片使用。
+
+有时想可以融合多个元素。这样不仅可以混合图片，还可以把元素的文本和边框与容器的背景图片混合在一起。如下图所示：
+
+<IframeWindow url="/css-tutorial/9-gradient-shadow/blend-fusion" />
+
+实现的代码如下所示。`mix-blend-mode`可以融合多个元素。可以把标题显示在图片上方，但遮住的图片部分依然可以显示出来，
+
+```html
+<!doctype>
+<head>
+  <style type="text/css">
+.blend {
+  background-image: url("images/bear.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 15em 0 1em;
+}
+
+.blend > h1 {
+  margin: 0;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 6rem;
+  text-align: center;
+  mix-blend-mode: hard-light;
+  background-color: #c33;
+  color: #808080;
+  border: 0.1em solid #ccc;
+  border-width: 0.1em 0;
+}
+  </style>
+</head>
+<body>
+  <div class="blend">
+    <h1>Ursa Major</h1>
+  </div>
+</body>
+```
