@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkfull_frontend=self.webpackChunkfull_frontend||[]).push([[535],{5641:e=>{e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"MDX Blog Post","permalink":"/full-frontend/blog/mdx-blog-post"}]}')}}]);
