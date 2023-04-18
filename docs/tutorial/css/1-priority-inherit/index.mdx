@@ -3,6 +3,8 @@ sidebar_position: 1
 tags: 
   - CSS
 ---
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+
 # 一、优先级和继承
 
 ## 1. 层叠
@@ -43,7 +45,7 @@ tags:
 
 需要特别注意的是`!important` 。为了在样式表里覆盖行内声明，需要为声明添加！important，这样能将它提升到一个更高优先级的来源。但如果行内样式也被标记为！important，就无法覆盖它了。
 
-比如下面这段代码，.featured的`background-color`没有生效，因为`#main-nav a`的权重更高
+比如下面这段代码，.featured的`background-color`没有生效，因为`#main-nav a`的权重更高。
 
 ```html
 <!doctype html>
@@ -91,6 +93,8 @@ h1 {
   </header>
 </body>
 ```
+效果如下所示，最终最后一个标签的背景色还是绿色。单独为它设置的橘色背景色没有生效。
+<IframeWindow url="/css-tutorial/1-priority/priority.html" />
 
 ### 样式覆盖
 

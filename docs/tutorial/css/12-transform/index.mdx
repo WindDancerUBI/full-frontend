@@ -1,0 +1,560 @@
+---
+sidebar_position: 12
+tags: 
+  - CSS
+---
+
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 十二、变换
+
+`transform`属性可以用来改变页面元素的形状和位置，其中包括二维或者三维的旋转、缩放和倾斜。变换通常结合过渡或动画一起使用。
+
+## 1. 旋转、平移、倾斜和缩放
+
+基本的变换有如下四种：
+
+- **旋转（Rotate）**——元素绕着一个轴心转动一定角度。
+- **平移（Translate）**——元素向上、下、左、右各个方向移动（有点类似于相对定位）。
+- **缩放（Scale）**——缩小或放大元素。
+- **倾斜（Skew）**——使元素变形，顶边滑向一个方向，底边滑向相反的方向。
+
+这四种基本的变换效果如下图所示：
+
+<IframeWindow url="/css-tutorial/12-transform/transform-basic" />
+
+每种变换都使用相应的函数作为transform属性的值，相关代码如下所示。
+
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
+```
+
+```html
+<body>
+  <div class="card card-rotate">
+    <h4>旋转</h4>
+    <p>旋转了15度</p>
+  </div>
+  <div class="card card-translate">
+    <h4>平移</h4>
+    <p>向左向下各平移了40px</p>
+  </div>
+  <div class="card card-skew">
+    <h4>倾斜</h4>
+    <p>向左倾斜了20度</p>
+  </div>
+  <div class="card card-scale">
+    <h4>缩放</h4>
+    <p>放大了1.2倍</p>
+  </div>
+</body>
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+html {
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  background-color: hsl(210, 80%, 20%);
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+img {
+  max-width: 100%;
+}
+
+.card {
+  padding: 0.5em;
+  margin: 2em auto;
+  background-color: white;
+  width: 200px;
+  max-width: 80%;
+}
+
+.card-rotate {
+  transform: rotate(15deg);
+}
+.card-translate {
+  transform: translate(40px, 40px);
+}
+.card-skew {
+  transform: skew(20deg);
+}
+.card-scale {
+  transform: scale(1.2);
+}
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+使用变换的时候要注意一件事情，虽然元素可能会被移动到页面上的新位置，但它不会脱离文档流。你可以在屏幕范围内以各种方式平移元素，其初始位置不会被其他元素占用。当旋转某元素的时候，它的一角可能会移出屏幕边缘，同样也可能会遮住旁边其他元素的部分内容。
+
+:::tip 注意
+
+变换不能作用在`<span>`或者`<a>`这样的行内元素上。若确实要变换此类元素，要么改变元素的display属性，替换掉inline（比如inline-block），要么把元素改为弹性子元素或者网格项目（为父元素应用display: flex或者display: grid）。
+
+:::
+
+### 1.1 变换基点
+
+变换是围绕基点（point of origin）发生的。基点是旋转的轴心，也是缩放或者倾斜开始的地方。
+
+默认情况下，基点就是元素的中心，但可以通过transform-origin属性改变基点位置。响应的代码如下所示，基点可以指定为百分比、px、em、其他单位的长度值或者是关键字。比如下面两种写法是等价的。
+
+```css
+transform-origin: right center;
+transform-origin: 100% 50%;
+```
+
+### 1.2 多重变换
+
+可以对transform属性指定多个值，用空格隔开。**变换的每个值从右向左按顺序执行**。比如下面这段代码，元素会先向右平移15px，然后顺时针旋转15度。
+
+```css
+transform: rotate(15deg) translate(20px, 0);
+```
+
+## 2. 在运动中变换
+
+变换本身不具备太多实用性。当和动作结合起来使用的时候，变换就会有用多了。比如下面这个导航栏就是使用了过渡和变换相结合。
+
+<IframeWindow url="/css-tutorial/12-transform/transform-transition" />
+
+代码如下所示。主要实现了这么几个功能：
+
+1. 鼠标划过链接的时候，放大图标尺寸。
+2. 鼠标划过链接的时候，给整个导航菜单添加背景颜色。
+3. 隐藏链接标签，当用户使用鼠标悬停在菜单上时，让它们通过淡入过渡特效全部显示出来。
+4. 使用平移为链接标签添加“飞入”效果，与淡入一起使用。
+
+
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
+```
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Alfa+Slab+One|Raleway"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <h1 class="page-header">在运动中变换</h1>
+    </header>
+    <nav class="main-nav">
+      <ul class="nav-links">
+        <li>
+          <a href="#">
+            <img src="images/home.svg" class="nav-links__icon" />
+            <span class="nav-links__label">Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <img src="images/calendar.svg" class="nav-links__icon" />
+            <span class="nav-links__label">Events</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <img src="images/members.svg" class="nav-links__icon" />
+            <span class="nav-links__label">Members</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <img src="images/star.svg" class="nav-links__icon" />
+            <span class="nav-links__label">About</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </body>
+</html>
+```
+
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+html {
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  background-color: hsl(200, 80%, 30%);
+  background-image: radial-gradient(
+    hsl(200, 80%, 30%),
+    hsl(210, 80%, 20%)
+  );
+  color: white;
+  font-family: Raleway, Helvetica, Arial, sans-serif;
+  line-height: 1.4;
+  margin: 0;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Alfa Slab One, serif;
+  font-weight: 400;
+}
+
+main {
+  display: block;
+}
+
+img {
+  max-width: 100%;
+}
+
+.page-header {
+  padding: 2rem 2rem 3rem;
+}
+
+.main-nav {
+  position: fixed;
+  left: 0;
+  top: 8.25rem;
+  z-index: 10;
+  background-color: transparent;
+  transition: background-color 0.5s linear;
+  border-top-right-radius: 0.5em;
+  border-bottom-right-radius: 0.5em;
+}
+
+.main-nav:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.nav-links {
+  list-style: none;
+  display: block;
+  padding: 1em;
+  margin-bottom: 0;
+}
+.nav-links > li + li {
+  margin-left: 0.8em;
+}
+.nav-links > li > a {
+  display: block;
+  padding: 0.8em 0;
+  color: white;
+  font-size: 0.8rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.nav-links__icon {
+  height: 1.5em;
+  width: 1.5em;
+  vertical-align: -0.2em;
+}
+.nav-links > li > a:hover {
+  color: hsl(40, 100%, 70%);
+}
+.nav-links > li + li {
+  margin-left: 0;
+}
+
+.nav-links__label {
+  display: inline-block;
+  margin-left: 1em;
+  padding-right: 1em;
+  opacity: 0;
+  transform: translate(-1em);
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3),
+    opacity 0.4s linear;
+}
+.nav-links:hover .nav-links__label,
+.nav-links a:focus > .nav-links__label {
+  opacity: 1;
+  transform: translate(0);
+}
+.nav-links > li:nth-child(2) .nav-links__label {
+  transition-delay: 0.1s;
+}
+.nav-links > li:nth-child(3) .nav-links__label {
+  transition-delay: 0.2s;
+}
+.nav-links > li:nth-child(4) .nav-links__label {
+  transition-delay: 0.3s;
+}
+.nav-links > li:nth-child(5) .nav-links__label {
+  transition-delay: 0.4s;
+}
+
+.nav-links__icon {
+  transition: transform 0.2s ease-out;
+}
+
+.nav-links a:hover > .nav-links__icon,
+.nav-links a:focus > .nav-links__icon {
+  transform: scale(1.3);
+}
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+过渡和变换结合使用的核心：对于常规状态下的元素和悬浮、点击状态下的元素分别设置各自的transform变换，然后对transform属性设置过渡。
+
+对于整个过程，为什么要给元素设置transform变换，而不是直接设置属性（比如heigt、width）？
+
+这些变换似乎看上去很没必要，但却能显著提高浏览器渲染性能。
+
+## 3. 动画性能
+
+变换在浏览器中的性能要好得多。如果我们要对元素的定位使用动画（比如为left属性添加过渡效果），可以明显感受到性能很差。对复杂元素使用动画或者在页面内一次性对多个元素使用动画，问题尤其明显。
+
+渲染可以分为三个阶段：布局、绘制和合成。
+
+### 3.1 布局
+
+在第一个阶段布局中，浏览器需要计算每个元素将在屏幕上占多大空间。因为文档流的工作方式，所以一个元素的大小和位置可以影响页面上无数其他元素的大小和位置。
+
+任何时候改变一个元素的宽度或高度，或者调整位置属性（比如top或者left），元素的布局都会重新计算。如果使用JavaScript在DOM中插入或者移除元素，也会重新计算布局。一旦布局发生改变，浏览器就必须**重排（reflow）**页面，重新计算所有其他被移动或者缩放的元素的布局。
+
+### 3.2 绘制
+
+布局之后是绘制。这个过程就是填充像素：描绘文本，着色图片、边框和阴影。这不会真正显示在屏幕上，而是在内存中绘制。页面各部分生成了很多的图层（layers）。
+
+如果改变某个元素的背景颜色，就必须重新绘制它。但因为更改背景颜色不会影响到页面上任何元素的位置和大小，所以这种变化不需要重新计算布局。改变背景颜色比改变元素大小需要的计算操作要少。
+
+某些条件下，页面元素会被提取到自己的图层。这时候，它会从页面的其他图层中独立出来单独绘制。浏览器把这个图层发送到计算机的图形处理器（graphics processing unit, GPU）进行绘制，而不是像主图层那样使用主CPU绘制。这样安排是有好处的，因为GPU经过了充分的优化，比较适合做这类计算。
+
+### 3.3 合成
+
+在合成（composite）阶段，浏览器收集所有绘制完成的图层，并把它们提取为最终显示在屏幕上的图像。合成过程需要按照特定顺序进行，以确保图层出现重叠时，正确的图层显示在其他图层之上。
+
+opacity和transform这两个属性如果发生改变，需要的渲染时间就会非常少。当我们修改元素的这两个属性之一时，浏览器就会把元素提升到其自己的绘制图层并使用GPU加速。因为元素存在于自己的图层，所以整个图像变化过程中主图层将不会发生变化，也无须重复的重绘。
+
+## 4. 三维变换
+
+网页本身就是2D的。但我们不应该被局限在这里，变换可以在三个维度上实现：X轴、Y轴和Z轴。
+
+### 4.1 控制透视距离
+
+变换后的元素一起构成了一个3D场景。接着浏览器会计算这个3D场景的2D图像，并渲染到屏幕上。下面是使用三维变换在x轴旋转30度的效果。
+
+<IframeWindow url="/css-tutorial/12-transform/3Dtransform-basic" />
+
+代码如下所示：
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <style type="text/css">
+      .row {
+        display: flex;
+        justify-content: center;
+      }
+
+      .box {
+        box-sizing: border-box;
+        width: 150px;
+        margin: 0 2em;
+        padding: 60px 0;
+        text-align: center;
+        background-color: hsl(150, 50%, 40%);
+      }
+
+      .no-perspective {
+        transform: rotateX(30deg);
+      }
+      .perspective {
+        transform: perspective(200px) rotateX(30deg);
+      }
+      .short-perspective {
+        transform: perspective(100px) rotateX(30deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="box no-perspective">One</div>
+      <div class="box perspective">Two</div>
+      <div class="box short-perspective">Three</div>
+    </div>
+  </body>
+</html>
+```
+
+第一个框的效果看起来和别的不一样，这是因为它没有设置透视距离，看起来不太像是3D的。它只是水平方向上做了一些压缩，没有立体感。不设置透视距离的3D变换看上去像是平的，”向远处转”的那部分元素没有显得变小。
+
+设置透视距离后，加强了3D效果。更短的透视距离，元素的边缘越远，缩小得越明显。第三个方框比第二个方框边缘更远。
+
+### 4.2 统一的透视距离
+
+在上述示例中，每个盒子都有自己的透视距离，是用perspective()函数设置的。有时候我们希望多个元素共享同一套透视距离，就仿佛它们处于相同的3D空间中。要实现这种效果，需要为它们的父元素设置perspective属性。
+
+代码如下所示。通过为父容器（或其他祖先元素）设置统一的透视距离，父容器包含的所有应用了3D变换的子元素，都将共享相同的透视距离。
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <style type="text/css">
+      .row {
+        display: flex;
+        justify-content: center;
+        perspective: 200px;
+      }
+
+      .box {
+        box-sizing: border-box;
+        width: 150px;
+        margin: 0 2em;
+        padding: 60px 0;
+        text-align: center;
+        background-color: hsl(150, 50%, 40%);
+        transform: rotateX(30deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div class="box">One</div>
+      <div class="box">Two</div>
+      <div class="box">Three</div>
+      <div class="box">Four</div>
+    </div>
+  </body>
+</html>
+```
+
+效果如下图所示：
+
+<IframeWindow url="/css-tutorial/12-transform/3Dtransform-parent" />
+
+### 4.3 perspective-origin
+
+默认情况下，透视距离的渲染是假设观察者（或者镜头）位于元素中心的正前方。perspective-origin属性可以上下、左右移动镜头的位置。
+
+代码如下所示：
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <style type="text/css">
+
+      .row {
+        display: flex;
+        justify-content: center;
+        perspective: 200px;
+        perspective-origin: left bottom;
+      }
+
+      .box {
+        box-sizing: border-box;
+        width: 150px;
+        margin: 0 2em;
+        padding: 60px 0;
+        text-align: center;
+        background-color: hsl(150, 50%, 40%);
+        transform: rotateX(30deg);
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="row">
+      <div class="box">One</div>
+      <div class="box">Two</div>
+      <div class="box">Three</div>
+      <div class="box">Four</div>
+    </div>
+  </body>
+</html>
+```
+
+跟之前一样的透视距离，但是视角变了，所有的盒子都移到了观察者的右侧。我们可以使用关键字top、left、bottom、right和center来指定位置，也可以使用百分比或者长度值，从元素的左上角开始计算。
+
+效果如下所示：
+
+<IframeWindow url="/css-tutorial/12-transform/3Dtransform-origin" />
+
+### 4.4 backface-visibility
+
+如果使用rotateX()或者rotateY()旋转元素超过90度，就会发现一些有趣的事情：元素的“脸”不再直接朝向你。它的“脸”转向别的地方，你会看到元素的背面。效果如下图所示：
+
+<IframeWindow url="/css-tutorial/12-transform/3Dtransform-backface" />
+
+这里第二个和第四个盒子旋转了190度。它们的背面朝向了我们。其中第四个盒子设置了`backface-visibility: hidden` ，这样它的背面就不可见了。而第二个盒子背面看到的就是之前元素的镜像图片。
+
+代码如下所示：
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <style type="text/css">
+      .row {
+        display: flex;
+        justify-content: center;
+        perspective: 200px;
+      }
+      .box {
+        box-sizing: border-box;
+        width: 150px;
+        margin: 0 2em;
+        padding: 60px 0;
+        text-align: center;
+        background-color: hsl(150, 50%, 40%);
+      }
+
+      .box:nth-child(2n) {
+        transform: rotateY(180deg);
+      }
+
+      .box:nth-child(n + 3) {
+        backface-visibility: hidden;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div class="row">
+      <div class="box">One</div>
+      <div class="box">Two</div>
+      <div class="box">Three</div>
+      <div class="box">Four</div>
+    </div>
+  </body>
+</html>
+```

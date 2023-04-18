@@ -4,7 +4,7 @@ tags:
   - CSS
 ---
 
-import BrowserWindow from '@site/src/components/BrowserWindow';
+import { IframeWindow } from '@site/src/components/BrowserWindow';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -129,11 +129,7 @@ close.addEventListener('click', function(event) {
 
 这段CSS里，使用了两次固定定位。第一次是modal-backdrop构建一个遮罩，四个方向都设置为0。这让遮罩填满整个视口。
 
-<BrowserWindow>
-
-![1.png](./img/1.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/7-position/fixed.html" />
 
 第二次是modal-body构建了一个内容填写区域。它的四条边都在视口内：顶边和底边到视口对应的边缘为20%，左边和右边距离视口对应的边缘为20%。
 
@@ -270,15 +266,9 @@ close.addEventListener('click', function(event) {
 
 这段代码将按钮放在距离modal-body顶部0.3em、右侧0.3em的位置。通常情况下，包含块是元素的父元素。**如果父元素未被定位**，那么浏览器会沿着DOM树往上找它的祖父、曾祖父，直到找到一个定位元素，用它作为包含块。
 
-接下来要把关闭按钮里的内容为x。做法是将按钮的：:after伪元素的content属性设置为x，并让伪元素绝对定位到按钮中间。
+接下来要把关闭按钮里的内容为x。做法是将按钮的：:after伪元素的content属性设置为x，并让伪元素绝对定位到按钮中间。效果如下图所示：
 
-效果如下图所示：
-
-<BrowserWindow>
-
-![2.png](./img/2.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/7-position/absolute.html" />
 
 :::tip
 为什么不把按钮里的文字close换成x，但是这会导致可访问性的问题：辅助的屏幕阅读器会读按钮里的文字。因此要给这个按钮一些有意义的提示。在使用CSS之前，HTML本身必须有意义。
@@ -290,11 +280,7 @@ close.addEventListener('click', function(event) {
 
 如果加上top、right、bottom和left属性，元素就会从原来的位置移走，但是不会改变它周围任何元素的位置。如下图所示，给第二个元素设置相对定位后，它会出现偏移，但是不会影响之前元素的布局。
 
-<BrowserWindow>
-
 ![3.png](./img/3.png)
-
-</BrowserWindow>
 
 ### 3.1 创建下拉菜单
 
@@ -490,11 +476,7 @@ close.addEventListener('click', function(event) {
 
 这段代码外层的dropdown设置成相对定位，下拉框dropdown-menu设置成绝对定位。这样一来，dropdown元素就成了dropdown-menu元素的包含块。下拉框dropdown-menu元素设置的left、top等属性也是参照dropdown元素来进行定位。最终效果如下图所示：
 
-<BrowserWindow>
-
-![4.png](./img/4.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/7-position/relative.html" />
 
 为什么要给父元素设置为相对定位？
 
@@ -506,19 +488,11 @@ close.addEventListener('click', function(event) {
 
 三角形绘制的原理：大多数情况下，我们会给一个元素加上较细的边框，通常1px或者2px就够了。但如果把边框变得很粗，边框的区域就会如下所示。
 
-<BrowserWindow>
-
 ![5.png](./img/5.png)
-
-</BrowserWindow>
 
 如果将元素的宽和高缩小到0时，元素四周的边都变成了三角形。
 
-<BrowserWindow>
-
 ![6.png](./img/6.png)
-
-</BrowserWindow>
 
 所以，可以添加如下所示的css代码，来创建一个向上和向下的三角形箭头。
 
@@ -545,11 +519,7 @@ close.addEventListener('click', function(event) {
 
 效果如下图所示：
 
-<BrowserWindow>
-
-![7.png](./img/7.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/7-position/triangle.html" />
 
 ## 4. 层叠上下文（z-index）
 
@@ -560,12 +530,6 @@ close.addEventListener('click', function(event) {
 ### 4.1 层叠问题
 
 比如在之前的代码中，注册对话框设置了固定定位，下拉菜单设置了相对定位和绝对定位。当点击注册按钮打开对话框示，下拉菜单跑到了注册对话框的上面，很显然这是不对的，这样也就失去了注册模态框设置遮罩的目的。
-
-<BrowserWindow>
-
-![8.png](./img/8.png)
-
-</BrowserWindow>
 
 浏览器会先绘制所有非定位的元素，然后绘制定位元素。默认情况下，所有的定位元素会出现在非定位元素前面。可以使用z-index解决上述问题。
 
@@ -592,6 +556,9 @@ close.addEventListener('click', function(event) {
   z-index: 2;
 }
 ```
+
+解决后效果如下所示：
+<IframeWindow url="/css-tutorial/7-position/z-index.html" />
 
 ### 4.2 层叠上下文顺序
 
@@ -674,11 +641,7 @@ body {
 
 最终效果如下所示，可以看到nested设置了`z-index: 100` ，但是它仍然在two的下面。
 
-<BrowserWindow>
-
-![9.png](./img/9.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/7-position/z-index-order.html" />
 
 叠放在第二个盒子后面的第一个盒子是一个层叠上下文的根。因此，虽然它的内部元素的z-index值很高，但是它内部的绝对定位元素不会跑到第二个盒子前面。
 
@@ -959,11 +922,6 @@ close.addEventListener('click', function(event) {
 
 效果如下所示，可以看到随着浏览器向下滚动，右侧导航栏一起滚动，当导航栏触顶后停止滚动。当浏览器滚动调即将触底时，导航栏又开始向上滚动。
 
-<BrowserWindow>
-
-![10.png](./img/10.png)
-
-</BrowserWindow>
-
+<IframeWindow url="/css-tutorial/7-position/sticky.html" />
 
 这是因为粘性元素永远不会超出父元素的范围，当滚动页面的时候，col-sidebar会一直正常滚动，但是affix会在滚动到特定位置时停下来。如果继续滚动得足够远，粘性元素还会恢复滚动。这种情况只在父元素的底边到达粘性元素的底边时发生。

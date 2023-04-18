@@ -4,6 +4,8 @@ tags:
   - CSS
 ---
 
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+
 # 三、盒子模型
 
 ## 1. 什么是盒子模型
@@ -21,8 +23,10 @@ tags:
 
 ### 2.1 不同的盒子模型模式
 
-下面这段代码定义了两个区域main和aside，并分别设置了它们的宽度为70%和30%。但是这两个区域并没有排列在一行，aside区域被挤到下面一行。
+下图里有两个div，并分别设置了它们的宽度为70%和30%。
+<IframeWindow url="/css-tutorial/3-boxmodel/box.html" />
 
+代码如下所示。这两个区域并没有排列在一行，aside区域被挤到下面一行。这是因为虽然它们的宽度加起来等于100%。但由于盒子模型的原因，它们两所占的总空间实际上大于100%！
 ```html
 <!doctype html>
 <head>
@@ -129,6 +133,8 @@ border-box模式的盒子模型如下图所示：
 	border-radius: .5em;
 }
 ```
+最终效果如下所示，这样就符合了并排显示的效果。
+<IframeWindow url="/css-tutorial/3-boxmodel/border-box.html" />
 
 ### 2.3 全局修改盒子模型
 
@@ -201,11 +207,10 @@ border-box模式的盒子模型如下图所示：
 }
 ```
 
-但是这样做会导致父元素多出一个左内边距和右外边距！这个可以通过添加一个div包裹父元素，并设置该div的负外边距来解决。
+但是这样做会导致父元素多出一个左内边距和右外边距！这个可以通过添加一个div包裹父元素，并设置该div的负外边距来解决。效果如下所示：
+<IframeWindow url="/css-tutorial/3-boxmodel/box-height.html" />
 
-![3.png](./img/3.png)
-
-1. **flex**布局：使用Flexbox实现两列等高布局。Flexbox默认会产生等高的元素。
+3. **flex**布局：使用Flexbox实现两列等高布局。Flexbox默认会产生等高的元素。
 
 ### 3.3 min-Height和max-Height
 
@@ -288,6 +293,8 @@ border-box模式的盒子模型如下图所示：
   </a>
 </aside>
 ```
+可以使用更通用的方案—猫头鹰选择器，即 `* + *` 。它将类名替换成了通配符，这样就可以实现容器内元素间距。效果如下所示：
 
-可以使用更通用的方案—猫头鹰选择器，即`* + *`。它将类名替换成了通配符，这样就可以实现容器内元素间距。
+<IframeWindow url="/css-tutorial/3-boxmodel/owl-selector.html" />
+
 使用猫头鹰选择器是需要权衡的。它省去了许多的需要设置外边距的地方，但是在某些不想加外边距的地方则需要覆盖。一般在开发中可以使用css module方案来隔离各个组件之间的样式污染来避免。

@@ -4,11 +4,11 @@ tags:
   - CSS
 ---
 
-import BrowserWindow from '@site/src/components/BrowserWindow';
+import BrowserWindow, { IframeWindow } from '@site/src/components/BrowserWindow';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# 五、FlexBox
+# 五、弹性布局
 
 ## 1. FlexBox的原则
 
@@ -89,11 +89,7 @@ import TabItem from '@theme/TabItem';
 
 最终效果图如下所示：
 
-<BrowserWindow>
-
-![Untitled](./img/1.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/5-flex-box/flexbox.html" />
 
 ## 2. 弹性子元素的大小
 
@@ -230,11 +226,7 @@ Flexbox的另一个重要功能是能够切换主副轴方向，用弹性容器�
 
 最终效果如下所示。按照flex的原则，左右区域的高度应该是相等的。实际上，确实是相等的，只是右边区域里的内容没有填满这个高度。为了解决这个问题，可以对右边区进行flex垂直布局。
 
-<BrowserWindow>
-
-![Untitled](./img/7.png)
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/5-flex-box/vertical-display.html" />
 
 对上书css样式作如下修改，对右边区域做flex垂直布局，并设置每个字元素的flex-grow为1，这样两个子元素会均分最大高度。
 
@@ -267,6 +259,9 @@ Flexbox的另一个重要功能是能够切换主副轴方向，用弹性容器�
   flex: 1;
 }
 ```
+最终效果如下图所示：
+
+<IframeWindow url="/css-tutorial/5-flex-box/final-vertical.html" />
 
 ## 4. FlexBox的属性
 

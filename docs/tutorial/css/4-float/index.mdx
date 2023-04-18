@@ -4,6 +4,10 @@ tags:
   - CSS
 ---
 
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # 四、浮动
 
 ## 1 浮动设计的初衷
@@ -16,60 +20,15 @@ tags:
 
 ## 2 理解浮动的机制
 
-浮动的初衷是为了实现图文混排，如果不理解浮动的机制就采用浮动进行布局，可能会产生意想不到的bug。
+浮动的初衷是为了实现图文混排，如果不理解浮动的机制就采用浮动进行布局，可能会产生意想不到的bug。比如下面这段代码：
+
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
+```
 
 ```html
 <!doctype html>
-<head>
-  <style>
-    :root {
-      box-sizing: border-box;
-    }
-
-    *,
-    ::before,
-    ::after {
-      box-sizing: inherit;
-    }
-
-    body {
-      background-color: #eee;
-      font-family: Helvetica, Arial, sans-serif;
-    }
-
-    body * + * {
-      margin-top: 1.5em;
-    }
-
-    header {
-      padding: 1em 1.5em;
-      color: #fff;
-      background-color: #0072b0;
-      border-radius: .5em;
-      margin-bottom: 1.5em;
-    }
-
-    .main {
-      padding: 0 1.5em;
-      background-color: #fff;
-      border-radius: .5em;
-    }
-
-    .container {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
-
-    .media {
-      float: left;
-      width: 50%;
-      padding: 1.5em;
-      background-color: #eee;
-      border-radius: 0.5em;
-    }
-  </style>
-</head>
-
 <body>
   <div class="container">
     <header>
@@ -131,6 +90,64 @@ tags:
   </div>
 </body>
 ```
+    
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+
+```css
+:root {
+  box-sizing: border-box;
+}
+
+*,
+::before,
+::after {
+  box-sizing: inherit;
+}
+
+body {
+  background-color: #eee;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+body * + * {
+  margin-top: 1.5em;
+}
+
+header {
+  padding: 1em 1.5em;
+  color: #fff;
+  background-color: #0072b0;
+  border-radius: .5em;
+  margin-bottom: 1.5em;
+}
+
+.main {
+  padding: 0 1.5em;
+  background-color: #fff;
+  border-radius: .5em;
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.media {
+  float: left;
+  width: 50%;
+  padding: 1.5em;
+  background-color: #eee;
+  border-radius: 0.5em;
+}
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
 
 比如上面这段代码，分为上下两个部分。上面部分是蓝色背景的大标题，下面部分是白色背景的商品展示。
 
@@ -138,9 +155,9 @@ tags:
 
 最终效果如下所示，使用浮动布局后出现了两个明显的问题：白色背景区域main没有将四个商品展示区域media包含进去；第三个media做边空出了一大块并导致了第四个media换行了。
 
-![截屏2023-03-22 10.31.59.png](./img/2.png)
+<IframeWindow url="/css-tutorial/4-float/float.html" />
 
-以上两个问题是由浮动的机制导致的
+以上两个问题是由浮动的机制导致的。
 
 ### 2.1 清除浮动
 
@@ -178,7 +195,9 @@ tags:
 }
 ```
 
-第一种方案要在html中添加不必要的标记，因此这种使用纯css的方案更实用。
+第一种方案要在html中添加不必要的标记，因此这种使用纯css的方案更实用。最终效果如下图所示：
+
+<IframeWindow url="/css-tutorial/4-float/float-clear.html" />
 
 ### 2.2 浮动陷阱
 
@@ -205,6 +224,9 @@ tags:
   clear: left;
 }
 ```
+最终效果如下图所示：
+
+<IframeWindow url="/css-tutorial/4-float/float-order.html" />
 
 ## 3 BFC
 
@@ -246,9 +268,9 @@ tags:
 
 实际效果如下。很显然这种图文混排的效果就是浮动的本质，但并不是我们想要的效果。
 
-![Untitled](./img/5.png)
+<IframeWindow url="/css-tutorial/4-float/BFC.html" />
 
-在浏览器中可以发现右边区域（media-body）实际上扩展到了最左边，它包围了浮动的图片。浮动图片是脱离文档流的
+在浏览器中可以发现右边区域（media-body）实际上扩展到了最左边，它包围了浮动的图片。浮动图片是脱离文档流的。
 
 ![截屏2023-03-22 11.20.55.png](./img/6.png)
 
@@ -282,6 +304,9 @@ tags:
   margin-top: 0;
 }
 ```
+最终效果如下图所示：
+
+<IframeWindow url="/css-tutorial/4-float/BFC-fix.html" />
 
 ## 4 网格系统
 
@@ -295,41 +320,12 @@ tags:
 
 ### 4.2 构建网格系统
 
-网格系统的相关样式如下所示。定义了12个类`.column-*`分别代表占据列数的12个情况。然后用属性选择器`[class*="column-"]` 选中这12个类，通过设置padding来定义网格每列之间的间隔。在给每行`.row` 添加左右负外边距来抵消首位两个列元素的padding。
+网格系统的相关样式如下所示。定义了12个类`.column-*`分别代表占据列数的12个情况。然后用属性选择器`[class*="column-"]` 选中这12个类，通过设置padding来定义网格每列之间的间隔。在给每行`.row` 添加左右负外边距来抵消首位两个列元素的padding。在html使用类似下面的代码即可实现基于浮动的网格系统
 
-```css
-.row {
-  margin-left: -0.75em;
-  margin-right: -0.75em;
-}
-
-.row::after {
-  content: " ";
-  display: block;
-  clear: both;
-}
-
-[class*="column-"] {
-  float: left;
-  padding: 0 0.75em;
-  margin-top: 0;
-}
-
-.column-1 { width: 8.3333%; }
-.column-2 { width: 16.6667%; }
-.column-3 { width: 25%; }
-.column-4 { width: 33.3333%; }
-.column-5 { width: 41.6667%; }
-.column-6 { width: 50%; }
-.column-7 { width: 58.3333%; }
-.column-8 { width: 66.6667%; }
-.column-9 { width: 75%; }
-.column-10 { width: 83.3333%; }
-.column-11 { width: 91.6667% }
-.column-12 { width: 100%; }
+```mdx-code-block
+<Tabs>
+<TabItem value="html" label="HTML">
 ```
-
-在html使用类似下面的代码即可实现基于浮动的网格系统
 
 ```html
 <main class="main clearfix">
@@ -395,3 +391,49 @@ tags:
   </div>
 </main>
 ```
+    
+```mdx-code-block
+</TabItem>
+<TabItem value="css" label="CSS">
+```
+    
+```css
+.row {
+  margin-left: -0.75em;
+  margin-right: -0.75em;
+}
+
+.row::after {
+  content: " ";
+  display: block;
+  clear: both;
+}
+
+[class*="column-"] {
+  float: left;
+  padding: 0 0.75em;
+  margin-top: 0;
+}
+
+.column-1 { width: 8.3333%; }
+.column-2 { width: 16.6667%; }
+.column-3 { width: 25%; }
+.column-4 { width: 33.3333%; }
+.column-5 { width: 41.6667%; }
+.column-6 { width: 50%; }
+.column-7 { width: 58.3333%; }
+.column-8 { width: 66.6667%; }
+.column-9 { width: 75%; }
+.column-10 { width: 83.3333%; }
+.column-11 { width: 91.6667% }
+.column-12 { width: 100%; }
+```
+
+```mdx-code-block
+</TabItem>
+</Tabs>
+```
+
+最终效果如下所示：
+
+<IframeWindow url="/css-tutorial/4-float/columns.html" />

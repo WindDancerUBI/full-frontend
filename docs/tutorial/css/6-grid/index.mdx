@@ -4,7 +4,7 @@ tags:
   - CSS
 ---
 
-import BrowserWindow from '@site/src/components/BrowserWindow';
+import { IframeWindow } from '@site/src/components/BrowserWindow';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -16,36 +16,7 @@ import TabItem from '@theme/TabItem';
 
 ### 6.1.1 构建基础网格
 
-<BrowserWindow>
-
-<style>
-  {`
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
-      grid-gap: 0.5em;
-    }
-
-    .grid > * {
-      background-color: darkgray;
-      color: white;
-      padding: 2em;
-      border-radius: 0.5em;
-    }
-  `}
-</style>
-
-<div class="grid">
-  <div class="a">a</div>
-  <div class="b">b</div>
-  <div class="c">c</div>
-  <div class="d">d</div>
-  <div class="e">e</div>
-  <div class="f">f</div>
-</div>
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/6-grid/grid-basic.html" />
 
 构建一个如上图所示的基础网格布局的代码如下:
 
@@ -97,7 +68,7 @@ import TabItem from '@theme/TabItem';
 
 grid-gap属性定义了每个网格单元之间的间距。也可以用两个值分别指定垂直和水平方向的间距（比如grid-gap: 0.5em 1em）。
 
-### 6.2 网格元素
+### 6.1.2 网格元素
 
 ![网格概念](./img/1.png)
 
@@ -118,79 +89,8 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 ## 6.2 网格布局的三种语法
 
 网格布局的语法有三种：编号网格线、命名网格线和命名网格区域。接下来将使用这三种语法来实现如下图所示的网格布局。
-
-<BrowserWindow>
-
-<style>
-{`
-  .container-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: repeat(4, auto);
-    grid-gap: 1.5em;
-    max-width: 1080px;
-    margin: 0 auto;
-  }
-
-  .container-header,
-  .container-nav {
-    grid-column: 1 / 3;
-    grid-row: span 1;
-    background-color: #709b90;
-    padding: 1.5em;
-    color: #fff
-  }
-
-  .main {
-    grid-column: 1 / 2;
-    grid-row: 3 / 5;
-  }
-
-  .sidebar-top {
-    grid-column: 2 / 3;
-    grid-row: 3 / 4;
-  }
-
-  .sidebar-bottom {
-    grid-column: 2 / 3;
-    grid-row: 4 / 5;
-  }
-
-  .tile {
-    padding: 1.5em;
-    background-color: #709b90;
-    color: #fff
-  }
-
-  .tile > :first-child {
-    margin-top: 0;
-  }
-
-  .tile * + * {
-    margin-top: 1.5em;
-  }
-`}
-</style>
-
-<div class="container-grid">
-  <header class="container-header">
-    <h1>头部</h1>
-  </header>
-  <nav class="container-nav">
-    导航
-  </nav>
-  <main class="main tile">
-    主要区域
-  </main>
-  <div class="sidebar-top tile">
-    右侧上方区域
-  </div>
-  <div class="sidebar-bottom tile centered">
-    右侧下方区域
-  </div>
-</div>
-
-</BrowserWindow>
+ 
+<IframeWindow url="/css-tutorial/6-grid/grid-syntax.html" />
 
 ### 6.2.1 编号网格线
 
@@ -602,72 +502,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 将特定图片的尺寸增加到2×2的网格区域。可以用featured类选择这些元素，让它们在水平和垂直方向上都占据两个网格轨道。由于元素按顺序排列，增加某些网格元素的大小会导致网格中出现空白区域，效果如下所示：
 
-<BrowserWindow>
-
-<style>
-  {`
-    .portfolio {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      grid-auto-rows: 1fr;
-      grid-gap: 1em;
-      grid-auto-flow: dense;
-    }
-
-    .portfolio > figure {
-      margin: 0;
-    }
-
-    .portfolio img {
-      max-width: 100%;
-    }
-
-    .portfolio figcaption {
-      padding: 0.3em 0.8em;
-      background-color: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      text-align: right;
-    }
-
-    .portfolio .featured {
-      grid-row: span 2;
-      grid-column: span 2;
-    }
-  `}
-</style>
-
-<div class="portfolio">
-  <figure class="featured">
-    <img src="https://th.bing.com/th/id/OIP.KKxQSD40D4kQMoYclp3reAHaEo?w=289&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="monkey" />
-    <figcaption>leopard</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.ikXsGWiOA264sTZPTPybGAHaFj?w=240&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="eagle" />
-    <figcaption>Panda</figcaption>
-  </figure>
-  <figure class="featured">
-    <img src="https://th.bing.com/th/id/OIP.sbI3GxAfXj0LsLlT-4fgKwHaE8?w=270&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="bird" />
-    <figcaption>giraffe</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.0lIXuqrPpVmAUY3FayRcVAHaFt?w=243&h=187&c=7&r=0&o=5&dpr=2&pid=1.7" alt="bear" />
-    <figcaption>Red panda</figcaption>
-  </figure>
-  <figure class="featured">
-    <img src="https://th.bing.com/th/id/OIP.sMTEU0LJ_crtT6cStkR3PAHaEK?w=328&h=185&c=7&r=0&o=5&dpr=2&pid=1.7" alt="swan" />
-    <figcaption>Cat</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.8tYuzRiE9GMb0pMEl8BbRAHaEo?w=274&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="elephants" />
-    <figcaption>Lion</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.Lwv7JRJWk6t2rg0tWVAhKQHaF7?w=234&h=187&c=7&r=0&o=5&dpr=2&pid=1.7" alt="owl" />
-    <figcaption>Tiger</figcaption>
-  </figure>
-</div>
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/6-grid/grid-auto.html" />
 
 当一个元素无法在某一行容纳（也就是说该元素占据了太多网格轨道）时，算法会将它移动到下一行，寻找足够大的空间容纳它。
 
@@ -763,76 +598,7 @@ grid-gap属性定义了每个网格单元之间的间距。也可以用两个值
 
 使用img标签的object-fit属性解决图片拉伸导致的变形问题，给它加上object-fit: cover防止渲染的图片变形。作为妥协，图片的边缘会被裁掉一部分。效果如下所示：
 
-<BrowserWindow>
-
-<style>
-  {`
-    .portfolio-flex {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      grid-auto-rows: 1fr;
-      grid-gap: 1em;
-      grid-auto-flow: dense;
-    }
-
-    .portfolio-flex > figure {
-      display: flex;
-      flex-direction: column;
-      margin: 0;
-    }
-
-    .portfolio-flex img {
-      flex: 1;
-      object-fit: cover;
-      width: 100%; /* UPDATED to fix layout in Chrome 76+ */
-    }
-
-    .portfolio-flex figcaption {
-      padding: 0.3em 0.8em;
-      background-color: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      text-align: right;
-    }
-
-    .portfolio-flex .featured {
-      grid-row: span 2;
-      grid-column: span 2;
-    }
-  `}
-</style>
-
-<div class="portfolio-flex">
-  <figure class="featured">
-    <img src="https://th.bing.com/th/id/OIP.KKxQSD40D4kQMoYclp3reAHaEo?w=289&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="monkey" />
-    <figcaption>leopard</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.ikXsGWiOA264sTZPTPybGAHaFj?w=240&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="eagle" />
-    <figcaption>Panda</figcaption>
-  </figure>
-  <figure class="featured">
-    <img src="https://th.bing.com/th/id/OIP.sbI3GxAfXj0LsLlT-4fgKwHaE8?w=270&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="bird" />
-    <figcaption>giraffe</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.0lIXuqrPpVmAUY3FayRcVAHaFt?w=243&h=187&c=7&r=0&o=5&dpr=2&pid=1.7" alt="bear" />
-    <figcaption>Red panda</figcaption>
-  </figure>
-  <figure class="featured">
-    <img src="https://th.bing.com/th/id/OIP.sMTEU0LJ_crtT6cStkR3PAHaEK?w=328&h=185&c=7&r=0&o=5&dpr=2&pid=1.7" alt="swan" />
-    <figcaption>Cat</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.8tYuzRiE9GMb0pMEl8BbRAHaEo?w=274&h=180&c=7&r=0&o=5&dpr=2&pid=1.7" alt="elephants" />
-    <figcaption>Lion</figcaption>
-  </figure>
-  <figure>
-    <img src="https://th.bing.com/th/id/OIP.Lwv7JRJWk6t2rg0tWVAhKQHaF7?w=234&h=187&c=7&r=0&o=5&dpr=2&pid=1.7" alt="owl" />
-    <figcaption>Tiger</figcaption>
-  </figure>
-</div>
-
-</BrowserWindow>
+<IframeWindow url="/css-tutorial/6-grid/grid-gallery.html" />
 
 ## 6.4 特性查询
 
