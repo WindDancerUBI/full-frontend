@@ -1,0 +1,166 @@
+---
+sidebar_position: 6
+tags: 
+  - React
+---
+
+# 六、useContext
+
+## 1、useContext的使用
+
+useContext的作用是将该组件的状态值在所有其子组件之间实现共享。通过一个例子来说明如何使用useContext。
+
+- 首先通过createContext创建一个句柄，它是状态在子组件之间共享的核心
+
+```tsx
+import React, { createContext } from "react";
+export const Context = createContext<{
+  num: number;
+  setNum: React.Dispatch<React.SetStateAction<number>>;
+}>({ num: 0, setNum: () => {} })
+```
+
+- 在父组件中使用Context.Provider将所有子组件包裹，并通过value提供共享的状态值；
+
+```tsx
+function Chapter5_1() {
+  const [num, setNum] = useState(0);
+
+  return (
+     <Context.Provider value={{num, setNum}} >
+       <div style={{ padding: 10, border: '1px solid #000' }}>
+         <h1>父组件</h1>
+         <p>数字num：{num}</p>
+         <ChildOne />
+         <ChildTwo />
+       </div>
+     </Context.Provider>
+  );
+}
+
+export default Chapter5_1;
+```
+
+- 在子组件中通过useContext接受Context传递下来的value值
+
+```tsx
+function ChildOne() {
+  const context = useContext(Context)
+
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件1</h2>
+      <p>该子组件用来显示num值</p>
+      <p>数字num：{context.num}</p>
+    </div>
+  );
+}
+
+export default ChildOne;
+```
+
+```tsx
+function ChildTwo() {
+  const context = useContext(Context)
+
+  const clickHandle = () => {
+    context.setNum(context.num + 1)
+  }
+
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件2</h2>
+      <p>该子组件用来修改num值</p>
+      <Button onClick={clickHandle}>增加</Button>
+    </div>
+  );
+}
+
+export default ChildTwo;
+```
+
+父组件通过`Context.Provider`包裹所有子组件来达到将`num`、`setNum`共享给所有的子组件。子组件通过`useContext`接受`Context`来获取到`num`、`setNum`，这样就可以达到状态在所有子组件中共享并且可以修改该状态的目的。
+
+- Context的用法非常类似与redux，都是在最上层提供一个`Provider`。这样下层的组件都可以获取到`value(value)`，从而达到数据共享；
+- 事实上，Context确实是作为状态管理的一种手段。在面对某个组件下的子组件之间的数据管理时，是可以用Context来代替redux的。
+- 但是做全局状态统一管理还是推荐使用redux，因为redux管理全局状态时性能稍好一些。
+
+## 2、配合useReducer实现redux功能
+
+- 首先创建一个类似于store的存储状态的地方，并且定义reducer函数。
+
+```tsx
+export type State = {
+  num: number
+}
+
+export type Action = {
+  data?: any[];
+  type: 'ADD' | 'REDUCE';
+}
+
+export const reducer = (state: State, action: Action) => {
+  switch (action.type) {
+    case 'ADD':
+      return {
+        num: state.num + 1
+      }
+    case 'REDUCE':
+      return {
+        num: state.num - 1
+      };
+    default:
+      return state
+  }
+}
+```
+
+- 在顶层组件中使用createContext创建Context，包裹子组件；并定义useReducer，通过Context.Provider将state和dispatch分发该下层的所有子组件
+
+```tsx
+export const Context = createContext<{
+  state: { num: number };
+  dispatch: React.Dispatch<React.SetStateAction<any>>;
+}>({ state: {num: 0}, dispatch: () => {} })
+
+function Chapter6_2() {
+  const [state, dispatch] = useReducer(reducer, { num: 0 });
+
+  return (
+		<Context.Provider value={{state, dispatch}} >
+       <div style={{ padding: 10, border: '1px solid #000' }}>
+         <h1>父组件</h1>
+         <p>数字num：{state.num}</p>
+         <ChildOne />
+         <ChildTwo />
+       </div>
+     </Context.Provider>  
+  );
+}
+
+export default Chapter6_2;
+```
+
+- 在子组件中使用状态state，并可以通过dispatch改变状态值
+
+```tsx
+function ChildOne() {
+  const context = useContext(Context)
+
+  const addNum = () => {
+    context.dispatch({
+      type: 'ADD',
+    })
+  }
+
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件1</h2>
+      <p>数字num：{context.state.num}</p>
+      <Button onClick={addNum}>增加</Button>
+    </div>
+  );
+}
+
+export default ChildOne;
+```

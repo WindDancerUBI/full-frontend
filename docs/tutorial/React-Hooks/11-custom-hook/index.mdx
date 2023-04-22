@@ -1,0 +1,354 @@
+---
+sidebar_position: 11
+tags: 
+  - React
+---
+
+# 十一、自定义hook
+
+## 1、Hook 使用规则
+
+- 只能在**函数最外层**调用 Hook。不要在循环、条件判断或者子函数中调用。
+- 只能在 **React 的函数组件**中调用 Hook。不要在其他 JavaScript 函数中调用。（还有一个地方可以调用 Hook —— 就是自定义的 Hook 中，我们稍后会学习到。）
+
+:::tip 为什么只能在函数最外层调用hook？
+[Hook 规则 - React](https://zh-hans.reactjs.org/docs/hooks-rules.html#only-call-hooks-at-the-top-level)
+:::
+
+## 2、实例1：自定义一个useArray hook（如何写一个自定义hook）
+
+遵循React的规则，使用React提供的基础hook，自定义一个useArray hook。该hook封装了对数组的操作，在其他地方可以方便的调用这个hook来完成对数组的操作。
+
+**功能说明**
+
+页面用来展示一组列表数据，页面上有添加、移除、清除三个按钮。这些按钮的作用分别是往列表数据里添加一条新的数据；移除现有列表数据中某个位置上的数据；清除现有列表中的所有数据。
+
+实现原理是定义一个数组状态（使用useState创建）用来存储列表数据。并定义一些方法对列表数据进行添加、移除、清除等操作。将数组状态和这些方法用custom hook封装，通过return返回。其他组件通过调用该hook获得要展示的列表数据和操作这些数据的方法。
+
+**实现代码**
+
+- useArray hook的实现
+
+```tsx
+import { useCallback, useState } from 'react';
+
+const useArray = <T>(val: T[]) => {
+  const [value, setValue] = useState(val);
+
+  // 清空列表
+  const clear = useCallback(() => {
+    setValue([]);
+  }, [])
+
+  // 移除列表特定位置元素
+  const removeIndex = useCallback((index: number) => {
+    setValue(state => {
+      const temp = [...state]
+      temp.splice(index, 1);
+      return temp
+    });
+  }, [])
+
+  // 添加元素
+  const add = useCallback((thing: T) => {
+    setValue(state => {
+      const temp = [...state]
+      temp.push(thing)
+      return temp
+    });
+  }, [])
+  return {
+    value,
+    clear,
+    removeIndex,
+    add,
+  };
+};
+
+export default useArray;
+```
+
+- 在页面中使用custom hook
+
+```tsx
+import { Button } from 'antd';
+import React from 'react';
+import useArray from './useArray';
+
+function Chapter11_1() {
+  const persons: { name: string; age: number }[] = [
+    { name: "小花", age: 25 },
+    { name: "小张", age: 22 }
+  ];
+  const { value, clear, removeIndex, add } = useArray(persons);
+
+  return (
+    <div style={{ fontFamily: 'sans-serif', textAlign: 'center'}}>
+      <Button
+        style={{ marginRight: "50px" }}
+        onClick={() => add({ name: "小明", age: 1 + Math.round(Math.random() * (100 - 1)) })}
+      >
+        添加
+      </Button>
+      <Button style={{ marginRight: "50px" }} onClick={() => removeIndex(0)}>
+        移除首位
+      </Button>
+      <Button style={{ marginBottom: "50px" }} onClick={() => clear()}>
+        清空
+      </Button>
+      {value.map((person, index) => (
+        <div style={{ marginBottom: "30px" }}>
+          <span style={{ color: "red", marginRight: "20px" }}>{index}</span>
+          <span>{person.name}</span>
+          <span>{person.age}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default Chapter11_1;
+```
+
+**注意事项**
+
+- 自定义hook一定要使用use开头的命名规范，否则会直接报错。因为自定义hook通常也会使用其他hook，如果使用了其他hook的函数，则它本身也是一个hook。因此必须符合hook的命名规范
+- 不要在回调函数中调用hook，应该把需要用到的回调方法通过hook返回，然后在需要用到的函数组件最外层获取该方法，这样就可以在回调函数中调用该方法。
+- 自定义hook中定义的方法建议使用useCallback包裹再返回。使用useCallback包裹的方法不会无缘无故的重复定义
+
+:::tip 为什么推荐使用useCallback定义hook中的方法？
+useCallback定义的方法不会在页面渲染时重新定义。它的好处有以下两点：
+
+1. 比如在调用cutom hook的页面中useEffect里使用了cutom hook定义的方法，则eslint会提示你将该方法添加到依赖项中（对于该cutom hook的使用者而非编写者很可能就会将它添加到依赖项）。如果useEffect中的副作用导致了页面重新渲染了的话，则该方法会被重新定义再一次调用useEffect，最终导致页面无限渲染。如果使用useCallback的话则会避免这个问题。
+2. 比如在调用cutom hook的页面中使用了该hook返回的方法，并将该方法以props的形式传给了它的子组件。如果该子组件使用了React.memo进行了优化，则该页面重新渲染时会导致cutom hook的该方法重新定义。这个时候React.memo比较该方法发现改变了，因此子组件也会重新渲染，这样就失去了React.memo使用的初衷（不随父页面的渲染而跟着一起渲染）。同样的，使用useCallback的话则会避免这个问题。
+:::
+
+## 3、实例2：自定义useQuery请求数据（自定义hook使用场景）
+
+在项目开发中，经常会碰到在多个组件中使用到了相同的代码逻辑。这个相同的代码逻辑是指相同的状态，以及与这个状态相关的一系列方法，这个时候就可以使用custom hook来封装这部分逻辑。
+
+**功能说明**
+
+在多个页面中都进行了相同的接口请求，现在要将这个接口返回的数据展示在不同的页面上，并且每个页面单独对这些数据进行清除操作。此时自定义一个useQuery来完成。
+
+**代码实现**
+
+- useQuery hook的实现
+
+```tsx
+import { useCallback, useState } from "react";
+
+const useQuery = () => {
+  const [dataList, setDataList] = useState<Array<any>>([]);
+  const [loading, setLoading] = useState<boolean>(false)
+
+  // 请求数据
+  const mutate = useCallback(() => {
+    // 模拟数据请求
+    setLoading(true)
+    setTimeout(() => {
+      setDataList([
+        {key: 1, name: '小明', age: Math.ceil(Math.random()* 30), gender: 'male'},
+        {key: 2, name: '小花', age: Math.ceil(Math.random()* 30), gender: 'female'},
+        {key: 3, name: '小张', age: Math.ceil(Math.random()* 30), gender: 'male'},
+        {key: 4, name: '小李', age: Math.ceil(Math.random()* 30), gender: 'female'},
+      ])
+      setLoading(false)
+    }, 1000);
+  }, [])
+
+  // 清除数据
+  const clear = useCallback(() => {
+    setDataList([])
+  }, [])
+
+  return {
+    dataList,
+    loading,
+    mutate,
+    clear
+  }
+};
+
+export default useQuery;
+```
+
+- 在不同的页面中使用数据，并进行不同的操作
+
+```tsx
+import { Button, Table } from 'antd';
+import React from 'react';
+import useQuery from './useQuery';
+
+function PageTwo() {
+  const {dataList, loading, mutate, clear} = useQuery()
+  return (
+    <div>
+      <Button onClick={mutate}>获取数据</Button>
+      <Button onClick={clear}>清除数据</Button>
+      <Table dataSource={dataList} loading={loading}>
+        <Table.Column dataIndex="name" title="姓名"/>
+        <Table.Column dataIndex="age" title="年龄"/>
+        <Table.Column dataIndex="gender" title="性别"/>
+      </Table>
+    </div>
+  );
+}
+
+export default PageTwo;
+```
+
+```tsx
+import { Button, Table } from 'antd';
+import React from 'react';
+import useQuery from './useQuery';
+
+function PageOne() {
+  const {dataList, loading, mutate, clear} = useQuery()
+  return (
+    <div>
+      <Button onClick={mutate}>获取数据</Button>
+      <Button onClick={clear}>清除数据</Button>
+      <Table dataSource={dataList} loading={loading}>
+        <Table.Column dataIndex="name" title="姓名"/>
+        <Table.Column dataIndex="age" title="年龄"/>
+        <Table.Column dataIndex="gender" title="性别"/>
+      </Table>
+    </div>
+  );
+}
+
+export default PageOne;
+```
+
+这里只是一个简单地实例。在实际开发中，需要从请求的数据，比如Select组件下拉框数据列表可能会在多处使用。而且针对请求过来的这个数据还有一些后续操作，比如将下拉框中的第一个数据进行默认值填入到Select中，这个时候就可以像上面那样写一个custom hook。
+
+:::tip 与状态管理工具Redux的区别
+
+通过这个例子发现，使用custom hook管理状态似乎与redux相似。但他们有着本质的区别，redux这类状态管理工具是全局状态；而使用hook的状态在不同的组件中使用，相互之间是互不影响。实际开发中根据需求进行选择。
+:::
+
+## 4、应用：用useSelectedMenu
+
+在文档的收官部分，再来看一个在本项目使用到自定义hook的例子。
+
+如果你之前有细心的话，就会发现。这个项目的Title（上图中标黄的部分）会随着页面的跳转，文字会自动更新到与左边的选中的菜单中的文字相同。那么这个是怎么实现的呢？是在每个页面上写上该文字吗？这种做法当然可行，但是如果今后想修改文字的话，则需要在两处都修改。显然，这种做法并不优雅！
+
+如果想做到只修改一处代码，使得菜单和Title部分的文字都同步更新，则可以试一试custom hook！
+
+- 首先需要定义一个配置项，该配置项包含路由、菜单文字等相关信息。代码见**/src/consts/menu.ts**
+
+```tsx
+export const menu = [
+  {
+    label: "1. React基本简介",
+    key: "1",
+    children: [
+      {
+        label: "1.1 React的特点",
+        key: "1-1",
+        path: "/abstract/feature",
+        component: Chapter1_1,
+      },
+      {
+        label: "1.2 React-Hook的历史",
+        key: "1-2",
+        path: "/abstract/history",
+        component: Chapter1_2,
+      }
+    ]
+  },
+  {
+    label: "2. useState",
+    key: "2",
+    children: [
+      {
+        label: "2.1 useState的基本用法",
+        key: "2-1",
+        path: "/useState/base",
+        component: Chapter2_1
+      },
+      {
+        label: "2.2 setState是同步还是异步",
+        key: "2-2",
+        path: "/useState/sync",
+        component: Chapter2_2
+      },
+      {
+        label: "2.3 useState的函数式更新",
+        key: "2-3",
+        path: "/useState/func-update",
+        component: Chapter2_3
+      },
+      {
+        label: "2.4 useState的惰性初始化",
+        key: "2-4",
+        path: "/useState/lazy",
+        component: Chapter2_4
+      }
+    ]
+  },
+ /** other codes */
+]
+```
+
+- 自定义一个hook，该hook根据当前页面的路由路径，去配置项里找到对应的文字，并将其以变量title返回。代码见**/src/utils/useSelectedMenu.ts**
+
+```tsx
+import { useEffect } from "react"
+import { useLocation } from "react-router"
+import { useImmer } from "use-immer"
+import { menu } from "../consts/menu"
+
+interface StateProps {
+  selectedKeys: string[];
+  openKeys: string[];
+  title: string
+}
+
+export const useSelectedMenu = () => {
+  const [state, setState] = useImmer<StateProps>({
+    selectedKeys: [],
+    openKeys: [],
+    title: ''
+  })
+  const {pathname} = useLocation()
+
+  useEffect(() => {
+    menu.forEach(item => {
+      item.children.forEach(child => {
+        if (child.path === pathname) {
+          setState(state => {
+            state.openKeys = [item.key]
+            state.selectedKeys = [child.key]
+            state.title = child.label
+          })
+        }
+      })
+    })
+  }, [pathname])
+
+  return {
+    selectedKeys: state.selectedKeys,
+    openKeys: state.openKeys,
+    title: state.title
+  }
+}
+```
+
+- 在PageHeader组件中直接使用custom hook获取到title值即可，代码见**/src/components/PageHeader.ts**
+
+```tsx
+import { useSelectedMenu } from "../utils/useSelectedMenu";
+
+const PageHeader = () => {
+  const { title } = useSelectedMenu();
+  return (
+    <div style={{ marginLeft: 25 }}>
+      <h1 style={{ color: "#fff" }}>{title}</h1>
+    </div>
+  );
+};
+
+export default PageHeader;
+```

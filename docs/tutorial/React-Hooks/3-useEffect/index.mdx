@@ -1,0 +1,227 @@
+---
+sidebar_position: 3
+tags: 
+  - React
+---
+
+# 三、useEffectdet
+
+## 1、基本用法
+
+```tsx
+useEffect(() => {
+  // do some effect function
+}, [dependence]);
+```
+
+在DOM更新完毕之后执行副作用函数，可以取代class的生命周期函数。
+
+-   当没有依赖项，会在组件每次更新后执行
+-   依赖项为空数组：会在组件挂载和卸载时执行
+-   依赖项为变量时，会在这些变量改变后才执行
+
+以下代码是一个简单的useEffect使用，当点击按钮后状态值num改变，引起页面重新渲染。由于依赖项是num，页面渲染完毕后，num发生了改变执行useEffect，将状态值doubleNum更新为2*num。此时页面因为状态值doubleNum的改变会再次重新渲染，渲染完毕后，由于num的值未改变，因此并不会再次执行useEffect了。
+
+```tsx
+const Chapter3_1 = () => {
+  const [num, setNum] = useState<number>(0);
+  const [doubleNum, setDoubleNum] = useState<number>(0);
+
+  useEffect(() => {
+		console.log('页面渲染完毕')
+    setDoubleNum(num * 2);
+  }, [num]);
+
+  return (
+    <div>
+      <p>num: {num}</p>
+      <p>doubleNum: {doubleNum}</p>
+      <button onClick={() => setNum(num + 1)} className="bnt-margin">
+        增加num
+      </button>
+    </div>
+  );
+};
+
+export default Chapter3_1;
+```
+
+如果依赖性为`[]`，则useEffect只会在页面第一次渲染的时候执行，因此doubleNum一直为0；
+
+如果依赖项为`[num,doubleNum]`，
+
+## 2、清除effect
+
+React官方对effect的清除有详细的说明
+
+[官方文档：需要清除的Effect](https://react.docschina.org/docs/hooks-effect.html#%E9%9C%80%E8%A6%81%E6%B8%85%E9%99%A4%E7%9A%84-effect)
+
+简而言之，有些useEffect中的副作用是定时器、订阅这些操作。如果不及时清除这些副作用，在页面重新渲染，执行useEffect时，就会再次创建一个定时器或订阅操作。这样随着页面的不断重新渲染，创建的定时器或订阅操作就会越来越多，最终导致内存泄漏
+
+看下面一个例子：
+
+```tsx
+function Chapter3_2() {
+  const [num, setNum] = useState<number>(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNum(num + 1);
+    }, 2000);
+    console.log("effect部分");
+    return () => {
+      clearInterval(timer);
+      console.log("return部分");
+    };
+  }, [num]);
+  return (
+    <div>
+      <Title level={2}>useEffect如何清除effect</Title>
+      <p>数字：{num}</p>
+    </div>
+  );
+}
+
+export default Chapter3_2;
+```
+
+设置一个定时器，在两秒后更新状态值num。num的改变导致页面重新渲染，此时再次执行useEffect，它会先去执行return的函数，然后再去执行副作用，这样就达到了先清理定时器。
+
+-   React会在第一次渲染时执行useEffect中的函数，是不会执行return。
+-   effect 在之后的每次渲染的时候都会执行。此时先执行return函数，再执行effect中的副作用。
+-   React 会在组件卸载的时候执行清除操作（即执行return）
+
+## 3、useEffect依赖项的意义
+
+### 探寻依赖项的意义
+
+接着使用上节的代码，但是这次依赖项设置为空，并定时在控制台打印num的值；并设置一个增加按钮，他可以用来改变num的值。结果发现，无论如何操作，控制台打印的值始终为0。
+
+```jsx
+function Chapter3_3() {
+  const [num, setNum] = useState<number>(0);
+
+  const addNum = () => {
+    setNum(num + 1)
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      console.log('num:', num)
+    }, 1000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
+  return (
+    <div>
+      <p>数字：{num}</p>
+      <Button onClick={addNum}>增加</Button>
+    </div>
+  );
+}
+```
+
+导致上述结果的原因是：React-Hook严重依赖闭包
+
+:::info 以下是一个关于闭包的例子：
+
+```tsx
+const testClosure = () => {
+  let num = 0;
+
+  const effect = () => {
+    num += 1;
+    const message = `num value in message：${num}`;
+
+    return function unmount() {
+      console.log(message);
+    };
+  };
+
+  return effect;
+};
+// 执行testClosure，返回effect函数，每次调用effect时执行的环境是不同的
+const add = testClosure();
+// 执行effect函数，返回引用了message1的unmount函数
+const unmount = add();
+// 再一次执行effect函数，返回引用了message2的unmount函数
+add();
+// message3
+add();
+// message4
+add();
+// message5
+add();
+unmount(); // 在这里会打印什么呢？按照直觉似乎应该打印5,实际上打印了1
+```
+::: 
+
+这是因为在闭包返回effect函数时，num=0的值被effect函数保留了下来，之后effect每次执行时num的值会加1。effcet函数本身也是一个闭包，unmount是在num=1时创建并返回的函数，它将num=1的值保留到打印信息中，因此后面num值如何变化，都无法影响到unmount函数中的num。想要使unmount函数返回最新的num，其实很简单，只需要重新创建并返回一次unmount函数。记在上述代码底部添加如下代码即可：
+
+```jsx
+const otherUnmount = add()
+otherUnmount() // 打印了最新值6
+```
+
+当了解了闭包的特性后，就可以得出依赖项的意义：
+
+在依赖项改变时，重新创建一个新的hook，并在创建的过程中拿到最新的值，防止在useEffect中使用到的状态值过期。
+
+如果使用了eslint的话，vscode会在依赖项里提示你将在useEffect中用到的变量添加进依赖项中。
+
+## 4、依赖项的注意事项
+
+一般选择什么作为useEffect的依赖项？选择依赖项时需要注意些什么呢？请看下面一个例子：
+
+```jsx
+function Chapter3_4() {
+  const [refresh, setRefresh] = useState<boolean>(false)
+  const [dataSource, setDataSource] = useState<any>([]);
+  const [otherObject, setOtherObject] = useState<{[key: string]: any}>({})
+
+  const constValue = 1
+  const object = {}
+
+  useEffect(() => {
+    console.log("页面重新渲染了")
+    setDataSource([
+      {key: 1, name: '小明', age: Math.ceil(Math.random()* 30), gender: 'male'},
+      {key: 2, name: '小花', age: Math.ceil(Math.random()* 30), gender: 'female'},
+      {key: 3, name: '小张', age: Math.ceil(Math.random()* 30), gender: 'male'},
+      {key: 4, name: '小李', age: Math.ceil(Math.random()* 30), gender: 'female'},
+    ])
+  }, [refresh])
+
+  return (
+    <Typography>
+      <Title level={2}>useEffectdet依赖项的选择</Title>
+      <Title level={3}>实例</Title>
+      <Button onClick={() => setRefresh(!refresh)}>刷新数据</Button>
+      <Table dataSource={dataSource}>
+        <Table.Column dataIndex="name" title="姓名"/>
+        <Table.Column dataIndex="age" title="年龄"/>
+        <Table.Column dataIndex="gender" title="性别"/>
+      </Table>
+    </Typography>
+  );
+}
+
+export default Chapter3_4;
+```
+
+分别使用以下五个常量、变量作为useEffect依赖项，得到的结果如下:
+
+-   使用普通常量（constValue）作为依赖项，页面只会渲染一次；
+-   使用普通对象（object)作为依赖项，页面无限渲染；
+-   使用普通状态值（refresh），在状态值改变时页面重新渲染；
+-   使用对象状态值（otherObject），页面只会渲染一次；
+-   使用对象状态值（dataSource）并且在useEffect中改变了该对象状态值，页面无限渲染。
+
+根据以上结果可以得到以下的一些建议：
+
+-   根据useEffect的闭包特性，为了避免获取到过期的值，因此需要将useEffect中使用到的变量作为依赖项；
+-   如果依赖项中有定义的普通对象，useEffect中有使用到了该对象时。请将该对象使用useState定义成状态值。
+    -   因为普通对象会在页面渲染时重新定义，其引用地址改变了，会引发useEffect的执行，该行为不可控。
+    -   而状态对象在页面重新渲染时，其引用定制不会改变。只会在setState是改变，这个行为是可控的。
+-   如果依赖项中有useState定义的状态对象，useEffect中又有改变该状态值时，请检查自己的逻辑。这种操作逻辑肯定是有问题的。

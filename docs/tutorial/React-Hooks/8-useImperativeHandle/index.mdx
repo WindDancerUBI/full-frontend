@@ -1,0 +1,186 @@
+---
+sidebar_position: 8
+tags: 
+  - React
+---
+
+# 八、useImperativeHandle
+
+## 1、React.forwardRef
+
+useImperativeHandle 应当与 forwardRef 一起使用。因此首先我们来研究一下React.forwardRef的作用。
+
+`React.forwardRef` 会创建一个React组件，这个组件能够将其接受的 [ref](https://reactjs.bootcss.com/docs/refs-and-the-dom.html) 属性转发到其组件树下的另一个组件中。这种技术并不常见，但在以下两种场景中特别有用：
+
+- 转发 refs 到 DOM 组件
+- 在高阶组件中转发 refs
+
+### 需求分析
+
+通过以下的例子来说明，定义一个子组件Child，它包裹有一个输入框Input。在父组件中定义一个按钮点击事件，在该事件中去触发子组件Child中的Input组件的focus（聚焦）事件。 
+
+解决方案是要在父组件拿到子组件中的Input组件的ref，这样就可以获取到Input的DOM，该DOM上有Input的focus（聚焦）事件。这样在父组件中的按钮点击事件中调用ref.currenr.focus即可达到目的。
+
+因为该Input组件被包裹在子组件Child中，因此需要React.forwardRef作为中间的转发层。将父组件中定义的ref透传到子组件Child中的Input组件，这样就可以在父组件中拿到Input组件的引用。
+
+### 代码实现
+
+- 父组件
+
+```tsx
+function Chapter8_1() {
+  const ref = React.createRef<any>()
+
+  const focus = () => {
+    console.log(ref)
+    ref.current.focus()
+  }
+
+  return (
+    <div>
+      <Button onClick={focus}>聚焦子组件Input</Button>
+      <Child ref={ref} />
+    </div>
+  );
+}
+
+export default Chapter8_1;
+```
+
+- 子组件
+
+```tsx
+const Child = React.forwardRef((props, ref: any) => {
+
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件</h2>
+      <Input ref={ref} />
+    </div>
+  );
+})
+
+export default Child;
+```
+
+## 2、useImperativeHandle的作用
+
+useImperativeHandle 可以让你在使用 ref 时自定义暴露给父组件的实例值。
+
+在上一个仅仅使用React.forwardRef，父组件只是通过拿到了子组件Child中的Input组件的DOM。当然我们的欲望不止于此，很多时候我们还想在父组件中通过ref获得子组件中的状态和定义的方法。这个时候useImperativeHandle 就派上用场了
+
+- 子组件
+
+该子组件中定义了`addTag`、`setTag`两个方法。这两个方法需要在父组件中去调用，传参并改变要显示的标签。因此在子组件中通过useImperativeHandle 将这两个方法暴露出去。
+
+```tsx
+import React, { forwardRef, useImperativeHandle, useState } from "react"; 
+import { Tag } from "antd";
+
+type Value = { id: any; label: string }[];
+interface MultipleTagProps {
+  initialValue?: Value; // 初始值
+  onChange?: (value: Value) => void;
+}
+
+const MultipleTag = forwardRef((props: MultipleTagProps, ref) => {
+  const { initialValue, onChange } = props;
+  const [array, setArray] = useState<Value>(initialValue || []);
+
+  // 删除标签
+  const deleteTag = (id: any) => {
+    const newArray = array.filter((item) => item.id !== id);
+    setArray(newArray);
+    onChange?.(newArray);
+  };
+
+  // 添加标签
+  const addTag = (params: Value) => {
+    const tmp = [...array];
+    params.forEach((item) => {
+      const isExit = tmp.find((thing) => thing.id === item.id);
+      if (!isExit) {
+        tmp.push(item);
+      }
+    });
+    setArray(tmp);
+    onChange?.(tmp);
+  };
+
+  // 设置标签
+  const setTag = (params: Value) => {
+    setArray(params);
+    onChange?.(params);
+  };
+
+  // 使用 ref 时自定义暴露给父组件的实例值。
+  useImperativeHandle(ref, () => ({
+    value: array,
+    addTag: (params: Value) => {
+      addTag(params);
+    },
+    setTag: (params: Value) => {
+      setTag(params);
+    }
+  }));
+
+  return (
+    <div style={{ width: 300, border: "1px solid #000", display: "flex", justifyContent: "center", alignItems: "center", minHeight: 40 }} >
+        {array.map((item) => (
+          <Tag
+            closable
+            key={item.id}
+            onClose={() => deleteTag(item.id)}
+          >
+            {item.label}
+          </Tag>
+        ))}
+    </div>
+  );
+});
+
+export default MultipleTag;
+```
+
+- 父组件
+
+子组件通过ref中暴露的addTag、setTag方法，在父组件中直接通过`ref.current.addTag()`、`ref.current.setTag()`，可达到调用子组件方法的目的。
+
+```tsx
+import { Button, Divider, Select} from "antd";
+import React, { useRef }  from "react";
+import MultipleTag from "./MultipleTag";
+
+const dataSource = [
+  { label: "小花", value: 1 },
+  { label: "小明", value: 2 },
+  { label: "小张", value: 3 },
+  { label: "老王", value: 4 }
+]
+
+function Chapter8_2() {
+  const ref = useRef<any>()
+
+  // 添加标签
+  const addTag = (value: number, options: any) => {
+    const val = { label: options.label, id: options.value }
+    ref.current.addTag([val])
+  }
+
+  // 重置标签
+  const setTag = () => {
+    ref.current.setTag([{ label: "小花", id: 1 }])
+  }
+
+  return (
+    <div>
+      <Select options={dataSource} onChange={addTag} placeholder="请选择要添加的标签" style={{width: 200}}/>
+      <Button onClick={setTag} style={{marginLeft: 15}}>重置</Button>
+      <Divider />
+      <MultipleTag initialValue={[{ label: "小花", id: 1 }]} ref={ref}/>
+    </div>
+  );
+}
+
+export default Chapter8_2;
+```

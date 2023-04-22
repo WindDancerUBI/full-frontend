@@ -1,0 +1,78 @@
+---
+sidebar_position: 9
+tags: 
+  - React
+---
+
+# 九、useMemo
+
+## 1、useMemo的作用
+
+把“创建”函数和依赖项数组作为参数传入 useMemo，它仅会在某个依赖项改变时才重新计算 memoized 值。这种优化有助于避免在每次渲染时都进行高开销的计算。
+
+这句话是官方对于useMemo的解释。简而言之，就是某个值的计算与某些状态有关时，可以使用useMemo只在该依赖状态改变时重新计算，从而减少不必要的计算开销。看下面的一个例子。
+
+该组件定义一个状态数字num将它显示在页面上，再定义另一个数字multipleNum为num的随机倍数也将它显示在页面上；如果使用普通函数计算multipleNum（再该函数中写一个for循环模拟高开销计算。
+
+```tsx
+function Chapter9_1() {
+  const [num, setNum] = useState<number>(0);
+  const [refresh, setRefresh] = useState<boolean>(false)
+
+  const multipleNum = () => {
+		// 模拟耗性能的开销
+		for (let i = 0; i < 999999999; i++) {
+      const element = i
+    }
+    return num * Math.floor(Math.random() * 10 + 1);
+  }
+
+  return (
+    <div>
+      <p>数字num: {num}</p>
+      <p>多倍数字：{multipleNum()}</p>
+      <Button onClick={() => setNum(num => num + 1)} style={{ marginRight: 15 }}>增加</Button>
+      <Button onClick={() => setRefresh(!refresh)}>刷新</Button>
+    </diiv>
+  );
+}
+
+export default Chapter9_1;
+```
+
+发现在每次页面渲染时都会计算multipleNum。由于该函数中有个模拟高开销的计算，因此每次点击刷新按钮都会导致页面卡顿一下。显然无关状态的更新（refresh）不应该去计算multipleNum。
+
+使用useMemo可以解决这个问题。其思想与Vue中的compute比较类似。
+
+```tsx
+function Chapter9_1() {
+  const [num, setNum] = useState<number>(0);
+  const [refresh, setRefresh] = useState<boolean>(false)
+
+  const multipleNum = useMemo(() => {
+    // 模拟耗性能的开销
+    for (let i = 0; i < 999999999; i++) {
+      const element = i
+    }
+    return num * Math.floor(Math.random() * 10 + 1);
+  }, [num])
+
+  return (
+    <div>
+      <p>多倍数字：{multipleNum}</p>
+      <Button onClick={() => setNum(num => num + 1)} style={{ marginRight: 15 }}>增加</Button>
+      <Button onClick={() => setRefresh(!refresh)}>刷新</Button>
+    </div>
+  );
+}
+
+export default Chapter9_1;
+```
+
+使用了useMemo后，它只会依赖项num更新时才去重新执行useMemo中的代码，它返回一个memoized 值。并将该值作为multipleNum存储。
+
+这样执行高开销的计算时，只会在依赖项更新时才会卡顿一下，而不是每次页面渲染都卡顿。这样就达到了优化的目的。
+
+## 2、useMemo的依赖项问题
+
+useMemo的依赖项与useEffect完全一致，如果该值只需在页面加载完毕时执行一次，这时可以传入空数组。如果每次页面渲染都需要重新计算该值，就不写依赖项，但这样也失去了使用useMemo的意义。

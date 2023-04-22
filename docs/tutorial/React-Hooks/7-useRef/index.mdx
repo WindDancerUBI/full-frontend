@@ -1,0 +1,124 @@
+---
+sidebar_position: 7
+tags: 
+  - React
+---
+
+# 七、useRef
+
+## 1、useRef的作用
+
+useRef 返回一个可变的 ref 对象，其ref .current 属性被初始化为传入的参数（initialValue）。返回的 ref 对象在组件的整个生命周期内持续存在。
+
+这是官方的说法，对于萌新来说可能比较抽象。以下通过比较两种方法实现同一件需求来阐述useRef的意义。
+
+### 需求说明
+
+在页面第一次加载完毕后，设置一个定时器，该定时器的作用是定期更改num的值，并将该定时器的id通过一个变量保存起来。当num的值大于10的时候，通过取出变量中保存的定时器id值，clearInterval达到清除定时器的作用。最终数字num应当停止在11。
+
+### 方案一：通过普通变量来存储定时器
+
+**代码实现**
+
+```tsx
+function Chapter7_1() {
+  const [num_1, setNum_1] = useState<number>(0);
+  let timer_1: any
+  useEffect(() => {
+    timer_1 = setInterval(() => {
+      setNum_1(num => num + 1)
+    }, 500)
+  }, [])
+  useEffect(() => {
+    if (num_1 > 10) {
+      console.log(timer_1)
+      clearInterval(timer_1)
+    }
+  }, [num_1])
+
+  return (
+    <div>
+      <p>数字1：{num_1}</p>
+    </div>
+  );
+}
+
+export default Chapter7_1;
+```
+
+**结果分析**
+
+最终并没有清除定时器，因此最终数字也没有停留在11。通过观察控制台打印的timer_1，发现打印的结果是undefined。很显然一开始timer_1保存的定时器id在多次的页面渲染后丢失了。
+
+导致这个原因的分析过程如下：首先定义了一个timer值，在页面加载完毕后执行第一个useEffect，在副作用函数中定义了一个定时器，其id是正确赋值给了timer_1的。但是1秒后，定时器触发了回调修改了状态值num_1，而状态值的修改将触发页面的重新渲染。因此React又开始重新执行Chapter7_1函数，当它执行到`let timer_1: any`这一行时，timer_1的值被重新定义为了undefined。其后的多次重新渲染又重新定义了timer_1为undefined。因此之前保存的定时器id在页面的重新渲染下丢失了。
+
+### 方案一：通过useRef来存储定时器
+
+**改进方案**
+
+通过上述代码的分析，我们明白了实现该需求的问题所在。就是如何保存定时器的id，使其在整个生命周期都保持不变。而解决这个问题的方案也不少，其一，可以定义一个state状态来存储定时器id。其二，就是现在所使用的的useRef。它们的值都是实整个生命周期中，不随页面渲染发生改变，只有你手动去更新它。
+
+**代码实现**
+
+```tsx
+function Chapter7_1() {
+  const [num_2, setNum_2] = useState<number>(0);
+  const ref = useRef<any>()
+  useEffect(() => {
+    ref.current = setInterval(() => {
+      setNum_2(num => num + 1)
+    }, 500)
+  }, [])
+  useEffect(() => {
+    if (num_2 > 10) {
+      console.log(ref.current)
+      clearInterval(ref.current)
+    }
+  }, [num_2])
+
+  return (
+    <div>
+      <p>数字1：{num_2}</p>
+    </div>
+  );
+}
+
+export default Chapter7_1;
+```
+
+## 2、useRef的特性
+
+useRefref 定义的对象在组件的整个生命周期内持续存在，因此可以用ref.current来存储值。但这里有个疑问，useState也可以存储值，并且在整个生命周期内值也不会改变。那么useRef存在的意义是什么呢？
+
+useRef与useState最大的区别是，useRef是通过ref.current的赋值操作来更改存储的值。并且ref.current的赋值操作是不会触发页面重新渲染的。
+
+在下面这个代码中，使用ref.current来存储要显示的数字，但是每次点击增加按钮（使ref.current+1）时，页面上显示的数字并没有改变（仍为0）。但是查看控制台打印的ref，发现其current值是正确的数字。很显然这验证了ref.current的赋值操作不会触发页面的渲染。点击刷新按钮，更改了页面的状态值refresh，页面重新渲染，此刻页面重新显示了正确的数字。
+
+```tsx
+function Chapter7_2() {
+  const ref = useRef<number>(0)
+  const add = () => {
+    ref.current = ref.current + 1
+    console.log('ref', ref)
+  }
+  
+  const [refresh, setRefresh] = useState<boolean>(false)
+
+  const refreshPage = () => {
+    setRefresh(!refresh)
+  }
+
+  return (
+    <div>
+      <Title level={2}>useRef的特性</Title>
+      <p>数字：{ref.current}</p>
+      <Button onClick={add} style={{marginRight: 15}}>增加</Button>
+      <Button onClick={refreshPage}>刷新</Button>
+    </Typography>
+  );
+}
+
+export default Chapter7_2;
+```
+
+当然，在上面这个案例中应当使用useState来存储数值，这样才能达到我们的预期。但是实际开发中，我们存储的有些值并不用显示在页面上，只是单纯的存储，在某个时间中拿到存储的值即可。在这种情况下，使用useRef更有优势，因为使用useState在改变存储的值时，会导致一些不必要的重新渲染

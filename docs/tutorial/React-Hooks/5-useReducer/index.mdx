@@ -1,0 +1,303 @@
+---
+sidebar_position: 5
+tags: 
+  - React
+---
+
+# 五、useReducer
+
+## 1、使用useReducer代替useState管理状态
+
+`useReducer`作为`useState` 的替代方案。它接收一个形如 `(state, action) => newState`的 reducer，并返回当前的 state 以及与其配套的 dispatch 方法。
+
+相比较于`useState`，`useReducer` 具有如下优点：
+
+- state中的状态值之间相互关联；
+- 下一个 state的更新依赖于之前的 state。
+
+下面通过一个例子来说明如何使用useReducer
+
+### **功能描述：**
+
+可以对一个数字进行不断地赋值，同时记录下历史值；可以通过undo对当前值进行撤销操作，一步步地回到最初值。在进行撤销操作的同时，记录下undo掉的值；通过redo可以回到undo之前的值，不断地redo最终可以回到执行所有撤销操作之前的值。
+
+### 代码实现：
+
+- 首先创建reducer。其作用是针对不同的操作类型，改变当前状态值，并将对应的历史记录存储到past、future中。
+
+```tsx
+export type State<T> = {
+  past: T[]; // 存放历史值
+  present: T; // 当前值
+  future: T[]; // 存放undo值，用于取消撤销
+}
+
+export type Action<T> = {
+  newPresent?: T;
+  type: 'UNDO' | 'REDO' | 'SET' | 'RESET';
+}
+
+export const undoReducer = <T>(state: State<T>, action: Action<T>) => {
+  const { past, present, future } = state;
+  const {newPresent} = action
+  switch (action.type) {
+    case 'UNDO':
+      if (past.length === 0) return state;
+      const previous = past[past.length - 1];
+      const newPast = past.slice(0, past.length - 1);
+      return {
+        past: newPast,
+        present: previous,
+        future: [present, ...future],
+      };
+    case 'REDO':
+      if (future.length === 0) return state;
+      const next = future[0];
+      const newFuture = future.slice(1);
+      return {
+        past: [...past, present],
+        present: next,
+        future: newFuture,
+      };
+    case 'SET':
+      if (newPresent === present) return state;
+      return {
+        past: [...past, present],
+        present: newPresent,
+        future: [],
+      };
+    case 'RESET':
+      return {
+        past: [],
+        present: newPresent,
+        future: [],
+      };
+    default:
+      return state
+  }
+}
+```
+
+- 在组件中使用reducer，定义各种点击时间应该dispatch的类型和值。
+
+```tsx
+function Chapter5_1() {
+  const [state, dispatch] = useReducer(undoReducer, {
+    past: [],
+    present: 0,
+    future: [],
+  } as State<number>)
+
+  const present = state.present as number;
+
+  const canUndo = state.past.length !== 0;
+  const canRedo = state.future.length !== 0;
+
+  // 撤销
+  const undo = useCallback(() => {dispatch({type: 'UNDO'})}, []);
+
+  // 取消撤销
+  const redo = useCallback(() => {dispatch({type: 'REDO'})}, []);
+
+  // 指定为特定值
+  const set = useCallback((newPresent: number) => {dispatch({type: 'SET', newPresent: newPresent})}, []);
+
+  // 重置为初始值
+  const reset = useCallback(() => {dispatch({type: 'RESET', newPresent: 0})}, []);
+
+  return (
+    <div>
+      <div>当前值：{present}</div>
+      <div style={{ marginTop: 30 }}>
+        <Button onClick={undo} disabled={!canUndo} style={{ marginRight: 15 }}>
+          撤销
+        </Button>
+        <Button onClick={redo} disabled={!canRedo} style={{ marginRight: 15 }}>
+          恢复撤销
+        </Button>
+        <Button
+          onClick={() => {
+            set(present + 1);
+          }}
+          style={{ marginRight: 15 }}
+        >
+          增加
+        </Button>
+        <Button
+          onClick={() => {
+            set(present - 1);
+          }}
+          style={{ marginRight: 15 }}
+        >
+          减少
+        </Button>
+        <Button onClick={reset}>重置</Button>
+      </div>
+    </div>
+  );
+}
+
+export default Chapter5_1;
+```
+
+可以看到针对复杂的状态并且状态之间相互关联时时，使用useReducer比useState具有很大的优势
+
+## 2、useReducer如何diapstch函数
+
+`useReducer`的设计理念与redux是相一致的，即数据改变必须可控。因此reducer中返回的必须是plian object。
+
+但是在开发中，我们要用到的状态大多数都是从后台获取的。当然你可以在接口返回数据后，再dispatch接口数据，但是这样的话，代码耦合度就很高了，这样组件就偏离了专注于渲染！
+
+在redux中dispatch异步函数的解决方案有redux-thunk，其代码非常的短小精悍。其原理就是拦截action，如果是函数，就执行该函数，再将该函数其返回值action传入dispatch。
+
+```tsx
+// redux-thunk源码
+function createThunkMiddleware(extraArgument) {
+  return ({ dispatch, getState }) => next => action => {
+    if (typeof action === 'function') {
+      return action(dispatch, getState, extraArgument);
+    }
+
+    return next(action);
+  };
+}
+
+const thunk = createThunkMiddleware();
+thunk.withExtraArgument = createThunkMiddleware;
+
+export default thunk;
+```
+
+- 仿照redux-thunk，我们可以给useReducer进行一次封装。
+
+```tsx
+import { useReducer } from "react";
+import { Action, State } from "./reducer";
+
+const thunkDispatch = (dispatch: React.Dispatch<Action>, getState: () => 
+  {
+    loading: boolean;
+    dataSource: any;
+  }
+) => {
+  return (action: any) => {
+    if (typeof action === 'function') {
+      action(thunkDispatch(dispatch, getState), getState);
+    } else {
+      dispatch(action);
+    }
+  };
+};
+
+export const useThunkReducer = (reducer: (state: State, action: Action) => 
+  {
+    loading: boolean;
+    dataSource: any;
+  }, 
+  defaultState: State
+) => {
+  const [state, dispatch] = useReducer(reducer, defaultState);
+  const getState = () => state;
+  const newDispatch = thunkDispatch(dispatch, getState);
+  return [state, newDispatch] as const
+};
+
+export const getDataSource = () => {
+  return (dispatch: React.Dispatch<Action>) => {
+    setTimeout(() => {
+      dispatch({
+        type: 'SUCCESS',
+        data: [
+          {key: 1, name: '小明', age: Math.ceil(Math.random()* 30), gender: 'male'},
+          {key: 2, name: '小花', age: Math.ceil(Math.random()* 30), gender: 'female'},
+          {key: 3, name: '小张', age: Math.ceil(Math.random()* 30), gender: 'male'},
+          {key: 4, name: '小李', age: Math.ceil(Math.random()* 30), gender: 'female'},
+        ]
+      })
+    }, 1000);
+  }
+}
+```
+
+- 定义reducer和获取接口数据的请求函数
+
+```tsx
+export type State = {
+  loading: boolean; // 加载状态
+  dataSource: any[]
+}
+
+export type Action = {
+  data?: any[];
+  type: 'START' | 'SUCCESS';
+}
+
+export const fetchDataReducer = (state: State, action: Action) => {
+  switch (action.type) {
+    case 'START':
+      return {
+        ...state,
+        loading: true,
+      }
+    case 'SUCCESS':
+      return {
+        loading: false,
+        dataSource: action.data
+      };
+    default:
+      return state
+  }
+}
+
+export const getDataSource = () => {
+  return (dispatch: React.Dispatch<Action>) => {
+    setTimeout(() => {
+      dispatch({
+        type: 'SUCCESS',
+        data: [
+          {key: 1, name: '小明', age: Math.ceil(Math.random()* 30), gender: 'male'},
+          {key: 2, name: '小花', age: Math.ceil(Math.random()* 30), gender: 'female'},
+          {key: 3, name: '小张', age: Math.ceil(Math.random()* 30), gender: 'male'},
+          {key: 4, name: '小李', age: Math.ceil(Math.random()* 30), gender: 'female'},
+        ]
+      })
+    }, 1000);
+  }
+}
+```
+
+- 在组件中使用useThunkReducer来dispatch异步函数
+
+```tsx
+function Chapter5_2() {
+  const [state, dispatch] = useThunkReducer(fetchDataReducer, {
+    dataSource: [],
+    loading: false
+  })
+
+  const { loading, dataSource } = state as State
+
+  const clickHandle = () => {
+    // 请求开始前，先将加载状态置为true
+    dispatch({
+      type: 'START',
+      dataSource: []
+    })
+    // 直接将请求接口的函数传给dispatch
+    dispatch(getDataSource())
+  }
+
+  return (
+    <div>
+      <Button onClick={clickHandle}>刷新</Button>
+      <Table dataSource={dataSource} loading={loading}>
+        <Table.Column dataIndex="name" title="姓名"/>
+        <Table.Column dataIndex="age" title="年龄"/>
+        <Table.Column dataIndex="gender" title="性别"/>
+      </Table>
+    </div>
+  );
+}
+
+export default Chapter5_2;
+```

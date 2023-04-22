@@ -1,0 +1,200 @@
+---
+sidebar_position: 10
+tags: 
+  - React
+---
+
+# 十、useCallback
+
+## 1、useCallback的作用
+
+useCallback的与useMemo大致相同。useCallback(fn, deps) 相当于 useMemo(() => fn, deps)。返回一个 memoized 回调函数。
+
+把内联回调函数及依赖项数组作为参数传入 `useCallback`，它将返回该回调函数的 memoized 版本，该回调函数仅在某个依赖项改变时才会更新。
+
+请看下面一个例子：
+
+- 父组件
+
+```tsx
+function Chapter10_1() {
+  const [num, setNum] = useState<number>(0);
+  const [refresh, setRefresh] = useState<boolean>(false)
+
+  // const addNum = () => {
+  //   setNum(num + 1)
+  // }
+
+  const addNum = useCallback(() => {
+    setNum(num + 1)
+  }, [num])
+  
+  return (
+    <div>
+      <div style={{ padding: 10, border: '1px solid #000' }}>
+        <h2>父组件</h2>
+        <p>数字num: {num}</p>
+        <Button onClick={() => setRefresh(!refresh)}>刷新</Button>
+        <Child addNum={addNum}/>
+      </div>
+    </div>
+  );
+}
+
+export default Chapter10_1;
+```
+
+- 子组件
+
+```tsx
+function Child(props: {addNum: () => void}) {
+  const { addNum } = props
+
+  useEffect(() => {
+    console.log('函数重新定义了')
+  }, [addNum])
+
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件</h2>
+      <Button onClick={addNum}>增加</Button>
+    </div>
+  );
+}
+
+export default Child;
+```
+
+在父组件中定义一个方法通过props传给子组件，在子组件中监视该函数。现在分别使用普通函数和useCallback优化的函数两种方式传值。点击刷新按钮，结果普通函数在每次页面重新渲染时都会重新定义；而useCallback优化的函数只在依赖项更新时重新定义。
+
+:::tip 注意
+上述代码中的依赖项num不可轻易省去
+:::
+
+下述代码是存在问题的，每次点击增加按钮，页面都会显示1。导致此问题的原因是useCallback一样使用了闭包机制。在依赖项改变时，重新定义函数，获取到的num值是函数定义时的num（0）。改代码只在页面加载完毕的时候定义一次addNum函数，并将当时的num值保存下来。之后每次执行addNum函数时，setNum(num + 1)中的num永远是0，而不是最新的状态值1。
+```tsx
+const addNum = useCallback(() => {
+	setNum(num + 1)
+}, [])
+```
+
+但是添加num的依赖后，每次num更新时都会重新定义一次addNum，很显然这是不必要的，因为这个只需要在页面加载时仅定义一次是最合理的。解决这个问题可以采用setState的函数式更新，代码如下：
+
+```tsx
+const addNum = useCallback(() => {
+	setNum(num => num + 1)
+}, [])
+```
+
+## 2. React.memo
+
+useCallback的作用只是避免函数不必要的重新定义，并不能控制函数的执行。那么useCallback有什么应用场景呢？
+
+官网对它的解释是：当你把回调函数传递给经过优化的并使用引用相等性去避免非必要渲染（例如 shouldComponentUpdate）的子组件时，它将非常有用。
+
+这里所说的引用相等性去避免非必要渲染除了它说的shouldComponentUpdate外，还有React.memo。而useCallback可以结合React.memo一起使用来达到性能优化。先来介绍一下React.memo的作用。
+
+总所周知，React每次父组件重新渲染时，都会导致其子组件一起重新渲染，而React.memo就是为了解决这个问题。在父组件重新渲染时，React.memo优化的子组件会比较父组件传给它的props值是否发生了改变，如果没改变则不进行子组件的渲染。
+
+看下面一个例子
+
+- 父组件
+
+```tsx
+function Father() {
+  const [num, setNum] = useState<number>(0);
+  const [refresh, setRefresh] = useState<boolean>(false)
+  
+  return (
+    <div>
+      <div style={{ padding: 10, border: '1px solid #000' }}>
+        <h2>父组件</h2>
+        <p>数字num: {num}</p>
+        <Button onClick={() => setRefresh(!refresh)}>刷新</Button>
+        <Child num={num}/>
+      </div>
+    </div>
+  );
+}
+
+export default Father;
+```
+
+- 子组件
+
+```tsx
+const Child = React.memo((props: {num: number}) {
+  const { num } = props
+
+  console.log('子组件重新渲染')
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件</h2>
+      <p>数字：{num}</p>
+    </div>
+  );
+})
+
+export default Child;
+```
+
+父组件将状态值num传给经过React.memo优化后的子组件。该子组件只会在num改变时重新渲染（在控制台输出日志），而点击刷新按钮改变refresh值并不会导致子组件重新渲染。
+
+## 3、useCallback的优化
+
+但是传递给子组件的props里有函数的话，这情形不一样了。
+
+- 父组件
+
+```tsx
+function Chapter10_1() {
+  const [num, setNum] = useState<number>(0);
+  const [refresh, setRefresh] = useState<boolean>(false)
+
+  const addNum = () => {
+	  setNum(num + 1)
+  }
+  
+  return (
+    <div>
+      <div style={{ padding: 10, border: '1px solid #000' }}>
+        <h2>父组件</h2>
+        <p>数字num: {num}</p>
+        <Button onClick={() => setRefresh(!refresh)}>刷新</Button>
+        <Child addNum={addNum}/>
+      </div>
+    </div>
+  );
+}
+
+export default Chapter10_1;
+```
+
+- 子组件
+
+```tsx
+const Child = React.memo((props: {addNum: () => void}) {
+  const { addNum } = props
+
+ console.log('子组件重新渲染')
+
+  return (
+    <div style={{ padding: 10, border: '1px solid #000' }}>
+      <h2>子组件</h2>
+      <Button onClick={addNum}>增加</Button>
+    </div>
+  );
+})
+
+export default Child;
+```
+
+点击刷新按钮，子组件也将重新渲染。因为React.memo对于对象只进行引用地址的比较。而父组件得重新渲染必定导致普通函数的重新定义，引用地址当然也就改变了。React.memo就失去了意义。
+
+解决上面问题的方法当然是使用useCallback。只在必要的时候重新定义函数。
+
+```tsx
+const addNum = useCallback(() => {
+  setNum(num => num + 1)
+}, [])
+```

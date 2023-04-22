@@ -1,0 +1,120 @@
+---
+sidebar_position: 4
+tags: 
+  - React
+---
+
+import BrowserWindow from '@site/src/components/BrowserWindow';
+
+# 四、useLayoutEffect
+
+## 1、useLayoutEffect与useEffect之间的区别
+
+两者之间的区别主要是：两者的执行时机不同。请看下面一个例子：
+
+给useEffect和useLayoutEffect分别添加依赖，为状态值num。点击增加按钮改变状态值num，这将导致DOM改变、页面重新渲染。从而触发useEffect和useLayoutEffect的执行。
+
+```tsx
+function Chapter4_1() {
+  const [num, setNum] = useState<number>(0)
+
+  useEffect(() => {
+    console.log('执行第一个effect')
+  }, [num])
+  
+  useEffect(() => {
+    console.log('执行第二个effect')
+  }, [num])
+
+  useLayoutEffect(() => {
+    console.log('执行layout-effect')
+  }, [num])
+
+  const clickHandle = () => {
+    setNum(num + 1)
+  }
+
+  return (
+    <div>
+      <p>数字：{num}</p>
+      <Button onClick={clickHandle}>增加</Button>
+    </div>
+  );
+}
+
+export default Chapter4_1;
+```
+
+每次点击按钮的打印结果如下所示：
+
+<BrowserWindow>
+
+```
+执行layout-effect
+执行第一个effect
+执行第二个effect
+```
+
+</BrowserWindow>
+
+很显然，`useLayout`执行的优先级比`useEffect`执行的优先级更高。通过查阅React官放文档可以得到如下结论：
+
+当React函数组件的状态更新时，此时页面重新渲染、该函数组件将再次执行。按照代码顺序一次来到`useEffect`、`useEffect`、`useLayoutEffect`处。由于`useEffect`的执行时机是在页面重新绘制后，因此它将被React托管，在稍后再执行`useEffect`中的副作用。而`useLayoutEffect`是在DOM改变时，触发重渲染，因此在浏览器执行绘制之前，`useLayoutEffect` 内部的更新计划将被同步刷新。
+
+- `useLayoutEffect`的执行时机是：页面DOM改变时，同步执行，然后重新绘制页面；
+- `useEffect`的执行时机是：页面DOM改变后，页面重新绘制后，执行副作用；
+
+## 2、何时使用useLayoutEffect？
+
+首先，`useLayoutEffect`与`useEffect`的作用基本是完全一样的，只是两者的执行时机不同。一般情况下应当使用`useEffect`，因为`useLayoutEffect`的执行时机是DOM更新时、页面绘制之前，这将阻塞页面的渲染。
+
+除非要修改DOM并且不让用户看到修改DOM的过程，才考虑使用`useLayoutEffect`。请看下面的一个例子:
+
+```tsx
+function Chapter4_2() {
+
+  const [num, setNum] = useState(0);
+  useEffect(() => {
+    console.log(`useEffect - count=${num}`)
+    // 耗时的操作
+    const pre = Date.now();
+    while(Date.now() - pre < 1000) {}
+    
+    // num为0时重新生成个随机数
+    if (num === 0) {    
+        setNum(10 + Math.random() * 200);
+    }
+  }, [num]);
+  
+  const [count, setCount] = useState(0);
+  useLayoutEffect(() => {
+    console.log(`useLayoutEffect - count=${count}`)
+    // 耗时的操作
+    const pre = Date.now();
+    while(Date.now() - pre < 1000) {}
+
+    if (count === 0) {    
+        setCount(10 + Math.random() * 200);
+    }
+  }, [count]);
+  
+
+  return (
+    <Typography>
+      <Title level={3}>实例1：使用useEffect</Title>
+      <p>数字num：{num}</p>
+      <Button onClick={() => setNum(0)}>重置</Button>
+      <Title level={3}>实例2：使用useLayoutEffect</Title>
+      <p>数字count：{count}</p>
+      <Button onClick={() => setCount(0)}>重置</Button>
+    </Typography>
+  );
+}
+
+export default Chapter4_2;
+```
+
+该组件要实现这么一个功能：点击按钮重置状态值num为0，num为0时，在1000ms后状态值num随机变为一个非0的值。
+
+- 使用useEffect处理该副作用时，发现有一个明显的num从0 到 随机值的过程。
+- 使用useLayoutEffect处理该副作用，发现点击重置后在卡顿了1s后页面显示了新的随机值，变0的这个过程没有在页面上显示出来。

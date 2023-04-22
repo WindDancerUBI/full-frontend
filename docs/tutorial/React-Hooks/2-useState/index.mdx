@@ -1,0 +1,314 @@
+---
+sidebar_position: 2
+tags: 
+  - React
+---
+
+# 二、useState
+
+## 1、基本用法
+
+`const [state, setState] = useState(initValue)`
+
+useState使React函数组件拥有了状态。
+
+-   括号里的initValue是state的初始值；
+-   数组解构的第一个参数是最新的state值，每次state的值的改变将触发页面重新渲染；
+-   数组解构的第二个参数是state的更新函数，通过给setState(newState)传递参数newState来改变状态值（state)，并引发页面的重新渲染。
+
+```tsx
+import React, { useState } from 'react';
+
+const Example = () => {
+  // 声明一个叫 "count" 的 state 变量
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+```
+
+## 2、setState是同步还是异步
+
+### **setState的批处理、合并策略**
+
+setState本身是同步的。但是react内部的批处理和合并逻辑的作用下，其行为像是异步的。请看下面一个例子：
+
+```tsx
+import { useState } from "react";
+import "./styles.css";
+
+export default function App() {
+  const [num, setNum] = useState(0);
+  const addNum = () => {
+    setNum(num + 1)
+    setNum(num + 2)
+    setNum(num + 3)
+  };
+  return (
+    <div className="App">
+      <h1>setState是同步还是异步的？</h1>
+      <p>数字：{num}</p>
+      <button onClick={addNum}>增加</button>
+    </div>
+  );
+}
+```
+
+在该代码中，点击一次增加按钮，连续调用了三次setNum，分别将num +1， +2， +3。最后发现，num相较于点击按钮之前只增加了3，而不是预期的6（1+2+3），这是什么原因呢？
+
+这里涉及到React的批处理、合并策略：
+
+-   无论调用多少次 setState，，都不会立即执行更。而是将要更新的 state存入_pendingStateQuene，将要更新的组件存入 dirtyComponent；
+-   当根组件 didMount后，批处理机制更新为flse。此时再取出_pendingStateQuene和 dirtyComponent中的state和组件进行合并更新，合并的方式是直接用最新的一次操作覆盖之前的操作。
+
+但是在原生事件和异步代码中，setState的机制又是不同的，请看下面的例子：
+
+```tsx
+export default class ClassComponent extends React.Component {
+  state = {
+    number: 0,
+  }
+
+  handleClick = () => {
+    this.setState({
+      number: this.state.number + 1
+    })
+    this.setState({
+      number: this.state.number + 2
+    })
+    this.setState({
+      number: this.state.number + 3
+    })
+    setTimeout(() => {
+      this.setState({
+        number: this.state.number + 1
+      })
+      this.setState({
+        number: this.state.number + 2
+      })
+      this.setState({
+        number: this.state.number + 3
+      })
+    }, 10)
+
+  }
+  render() {
+    return (
+      <div>
+        <p>数字：{this.state.number}</p>
+        <Button onClick={this.handleClick}>增加</Button>
+      </div>
+    )
+  }
+}
+```
+
+:::tip
+最后结果显示的是一次点击增加了9！
+:::
+
+这是因为在执行setTimeout之前，React对这三次state操作进行了批处理，并没有立即去更新他们。但执行到setTimeout时，React无权去对这个异步操作去执行批处理。这时，他将去处理之前的三个批处理，并将其合并更新，这时候的number值为3。在之后10ms后，执行异步代码setTimeout里的setState，这时候他不进行批处理，而是分别进行三次state更新，因此最后的结果是一次点击增加了9。
+
+总结如下：
+
+-   原生事件不会触发 react的批处理机制，因而调用 setState会直接更新；
+-   异步代码中调用 setState，，由于js的异步处理机制制，异步代码会暂存，等待同步代码执行完毕再执行，此时 react的批处理机制已经结束，因而直接更新。
+
+现在，将上面的类组件更改为函数组件，重新实现一编上面的操作：
+
+```tsx
+import { Button, Typography } from "antd";
+import { useState } from "react";
+
+const { Title, Text, Paragraph } = Typography
+
+const FunctionComponent = () => {
+  const [num, setNum] = useState(0);
+
+  const addNumAsync = () => {
+    setNum(num + 1)
+    setNum(num + 2)
+    setNum(num + 3)
+    setTimeout(() => {
+      setNum(num + 1)
+      setNum(num + 2)
+      setNum(num + 3)
+    });
+  }
+  return (
+    <div>
+      <p>数字：{num}</p>
+      <Button onClick={addNumAsync}>增加</Button>
+    </div>
+  );
+}
+
+export default FunctionComponent
+```
+
+:::tip
+最后结果显示的是一次点击增加了3！
+:::
+
+其实，函数组件和类组件在批处理的实现上是一致的，不同的区别在于：
+
+-   class组件是通过this.state获取到state的，因此更新时state是最新的值。
+-   function组件是setTimeout 时读取了当时渲染闭包环境的数据。虽然之后state值进行了更新，但setState时所用到的state仍然是之前的值。
+
+### **setState有时同步，有时异步**
+
+运行以下代码，在一次点击事件中调用三次setNum，结果发现三次打印的num均为0。
+
+```tsx
+const addNum = () => {
+  setNum(num + 1)
+  console.log('num', num)
+  setNum(num + 2)
+  console.log('num', num)
+  setNum(num + 3)
+  console.log('num', num)
+};
+```
+
+造成此种现象的原因已在上面解释过了，当执行到setNum(num + 1)时，React执行了该段代码，但是由于批处理机制并没有去更新state，因此执行到下一句代码时，打印的结果当然是0，同理，后面两个的结果也是0。此结果可以将setState的状态更新看成是异步的!
+
+运行以下代码，将一次点击事件改成先连续调用三次setState，然后再异步函数中在调用三次setState，结果发现六次打印结果为0，0，0，4，6，9
+
+```tsx
+handleClick = () => {
+  this.setState({
+    number: this.state.number + 1
+  })
+  console.log('1', this.state.number)
+  this.setState({
+    number: this.state.number + 2
+  })
+  console.log('2', this.state.number)
+  this.setState({
+    number: this.state.number + 3
+  })
+  console.log('3', this.state.number)
+  setTimeout(() => {
+    this.setState({
+      number: this.state.number + 1
+    })
+    console.log('4', this.state.number)
+    this.setState({
+      number: this.state.number + 2
+    })
+    console.log('5', this.state.number)
+    this.setState({
+      number: this.state.number + 3
+    })
+    console.log('6', this.state.number)
+  }, 10)
+
+}
+```
+
+很显然，前三次的状态更新进行了批处理。因此状态更新表现为异步的。但是在setTimeout中，批处理已经结束了，现在执行setState会立马更新state的值，此时状态更新相当于是同步的。
+
+如果将上述代码的实现改为function component，打印结果会是6个0。这个结果是显然易见的，更新机制仍然是和class组件一样的，但是因为闭包的原因，无法取到最新的state值！
+
+## 3、**函数式更新**
+
+通过上一节的分析，我们知道了，函数组件与类组件的区别在于：
+
+-   类组件是通过this.state来获取state的值，因此在进项状态更新时是可以获取到最新的state的值
+-   函数组件是在当时渲染闭包环境时读取state的值，因此当state值更新时，setState时操作的state的值是过时的、不是最新的。
+
+为了解决这个问题，可以通过在setState时，使用函数是更新法，传入一个state参数。
+
+函数式更新除了可以获取到最新的状态值，还可以阻止React的合并更新。
+
+```tsx
+const Chapter2_3 = () => {
+  const [num, setNum] = useState(0);
+
+  const addNumAsync = () => {
+    setNum(state => state + 1)
+    console.log('1', num)
+    setNum(num => num + 2)
+    console.log('1', num)
+    setNum(num => num + 3)
+    console.log('1', num)
+    setTimeout(() => {
+      setNum(num => num + 1)
+      console.log('1', num)
+      setNum(num => num + 2)
+      console.log('1', num)
+      setNum(num => num + 3)
+      console.log('1', num)
+    });
+  };
+
+  return (
+    <Typography>
+      <p>数字：{num}</p>
+      <Button onClick={addNumAsync}>增加</Button>
+    </Typography>
+  );
+}
+```
+
+以上代码一次点击最终增加了12，满足了我们一开始想要的结果。
+
+setState()可以接收一个对象外，还可以接收一个函数:
+
+-   传递对象 批处理，对相同变量进行的多次处理会合并为一个，并以最后一次的处理结果为准
+-   传递函数 链式调用，React 会把我们更新 state 的函数加入到一个队列里面，然后，按照函数的顺序依次调用。同时，为每个函数传入 state 的前一个状态，这样，就能更合理的来更新我们的 state 了,该函数有两个参数
+
+## 4、惰性初始化
+
+useState可以存字符串、数值等基本类型，也可以存数组、字符串等引用类型。那么可不可以存函数呢？
+
+```tsx
+const Chapter2_4 = () => {
+  const [callback, setCallback] = useState(() => { alert("init"); });
+
+  return (
+    <Typography>
+      <Button className="bnt-margin" onClick={() => { setCallback(() => { alert("change"); }); }} > 
+				更改函数 
+			</Button>
+      <Button onClick={callback}>执行函数</Button>
+    </Typography>
+  );
+
+```
+
+通过callback存入一个函数，在点击`更改函数`按钮时，变更存储的函数；在点击执行函数按钮时，调用存入的函数。然而结果并不是像我们期望的那样。在初始化state和点击`更改函数`按钮时，都自动执行了存入的函数！（如果使用了typescript，执行函数点击事件`onClick={callback}`，会直接报类型错误—不能将void赋值给function)
+
+:::tip
+这是因为React的useState有着惰性初始化的特性。
+:::
+
+传入函数给useState，React并不会认为你要存的是一个函数。相反他会认为这是一个非常消耗性能的计算state的操作，他会立即去执行还函数，并将该函数的返回值作为新的state。
+
+:::tip
+那么useState如何存一个函数呢？
+:::
+
+其实很简单，可以传入一个函数，该函数返回一个我们需要存储的函数，这样就达到了存储函数的目的，修改后的代码如下：
+
+```tsx
+const FunctionState = () => {
+  const [callback, setCallback] = useState(() => () => {alert('init')})
+  return (
+    <div className="App">
+      <h1>useState惰性初始化</h1>
+      <button onClick={() => {setCallback(() => () => {alert('change')})}}>
+				更改函数
+			</button>
+      <button onClick={callback}>执行函数</button>
+    </div>
+  );
+}
+```

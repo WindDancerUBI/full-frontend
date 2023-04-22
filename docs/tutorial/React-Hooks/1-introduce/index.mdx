@@ -1,0 +1,332 @@
+---
+sidebar_position: 1
+tags: 
+  - React
+---
+
+# 一、React-Hooks介绍
+
+## 1、**react是基本的页面渲染库**
+
+**基于不同的平台有：**
+
+- react-dom: 浏览器
+- react-native: app环境
+- react-vr: vr平台
+
+## 2、为什么要使用React-Hook
+
+在React-Hook诞生之前，React通常使用class作为组件。而function只能作为受控组件，它本身是没有自己的状态（state),只能通过接受props来被动渲染。引入React-Hook后，函数组件可以通过useState来拥有自己的状态；useEffect整合了各类生命周期，使得代码逻辑更清晰；自定义hook使得代码更容易复用。以下是官网对于React-Hook的介绍。
+
+[Hook 简介 - React](https://zh-hans.reactjs.org/docs/hooks-intro.html)
+
+简而言之，hook主要解决了以下的一些问题：
+
+- 大型组件很难拆分和重构，也很难测试。
+- 业务逻辑分散在组件的各个方法之中，导致重复逻辑或关联逻辑。
+- 组件类引入了复杂的编程模式，比如 render props 和高阶组件。
+
+:::info 核心思想
+组件的最佳写法应该是函数，而不是类。React Hooks 的意思是，组件尽量写成纯函数，如果需要外部功能和副作用，就用钩子把外部代码"钩"进来。
+:::
+
+## 3、Hook 的发展历程
+
+React 团队从一开始就很注重 React 的代码复用性
+
+他们对代码复用性的解决方案历经：Mixin, HOC, Render Prop，直到现在的 Custom Hook
+
+所以 Custom Hook 并不是一拍脑门横空出世的产物，即使是很多对 Custom Hook 有丰富开发经验的开发者，也不了解 Hook 到底是怎么来的，以及在 React 里扮演什么角色
+
+不理解这段设计思路是无法深刻的理解 Custom Hook 的。
+
+### 3.1 Mixin
+
+```jsx
+var SetIntervalMixin = {
+  componentWillMount: function() {
+    this.intervals = [];
+  },
+  setInterval: function() {
+    this.intervals.push(setInterval.apply(null, arguments));
+  },
+  componentWillUnmount: function() {
+    this.intervals.forEach(clearInterval);
+  }
+};
+
+var createReactClass = require('create-react-class');
+
+var TickTock = createReactClass({
+  mixins: [SetIntervalMixin], // 使用 mixin
+  getInitialState: function() {
+    return {seconds: 0};
+  },
+  componentDidMount: function() {
+    this.setInterval(this.tick, 1000); // 调用 mixin 上的方法
+  },
+  tick: function() {
+    this.setState({seconds: this.state.seconds + 1});
+  },
+  render: function() {
+    return (
+      <p>
+        React has been running for {this.state.seconds} seconds.
+      </p>
+    );
+  }
+});
+
+ReactDOM.render(
+  <TickTock />,
+  document.getElementById('example')
+);
+
+```
+
+优点：
+
+1. 确实起到了重用代码的作用
+
+缺点：
+
+1. 它是隐式依赖，隐式依赖被认为在 React 中是不好的
+2. 名字冲突问题
+3. 只能在 `React.createClass`里工作，不支持 ES6 的 Class Component
+4. 实践下来发现：难以维护
+
+在 React 官网中已经被标记为 '不推荐使用'，官方吐槽点[这里](https://zh-hans.reactjs.org/blog/2016/07/13/mixins-considered-harmful.html)
+
+### 3.2 HOC
+
+2015 年开始，React 团队宣布不推荐使用 Mixin，推荐大家使用 HOC 模式
+
+HOC 采用了 '装饰器模式' 来复用代码
+
+```jsx
+function withWindowWidth(BaseComponent) {
+  class DerivedClass extends React.Component {
+    state = {
+      windowWidth: window.innerWidth,
+    }
+
+    onResize = () => {
+      this.setState({
+        windowWidth: window.innerWidth,
+      })
+    }
+
+    componentDidMount() {
+      window.addEventListener('resize', this.onResize)
+    }
+
+    componentWillUnmount() {
+      window.removeEventListener('resize', this.onResize);
+    }
+
+    render() {
+      return <BaseComponent {...this.props} {...this.state}/>
+    }
+  }
+  return DerivedClass;
+}
+
+const MyComponent = (props) => {
+  return <div>Window width is: {props.windowWidth}</div>
+};
+
+```
+
+经典的 容器组件与展示组件分离 (separation of container presidential) 就是从这里开始的
+
+下面是最最经典的 HOC 容器组件与展示组件分离 案例 - Redux中的connect 的实例代码
+
+```jsx
+export const createInfoScreen = (ChildComponent, fetchData, dataName) => {
+  class HOComponent extends Component {
+    state = { counter: 0 }
+    handleIncrementCounter = () => {
+       this.setState({ counter: this.state.counter + 1 });
+    }
+componentDidMount() {
+      this.props.fetchData();
+    }
+
+    render() {
+      const { data = {}, isFetching, error } = this.props[dataName]; 
+      if (isFetching) {
+        return (
+          <div>Loading</div>
+        );
+      }
+
+      if (error) {
+        return (
+          <div>Something is wrong. Please try again!</div>
+        );
+      }
+
+      if (isEmpty(data)) {
+        return (
+          <div>No Data!</div>
+        );
+      }
+
+      return (
+        <ChildComponent 
+          counter={this.state.counter}
+          onIncrementCounterClick={this.handleIncrementCounter}
+          {...this.props}
+        />
+      );
+    }
+  }
+
+  const dataSelector = state => state[dataName];
+  const getData = () => createSelector(dataSelector, data => data);
+  const mapStateToProps = state => {
+    const data = getData();
+    return {
+      [dataName]: data(state),
+    };
+  };
+
+  HOComponent.propTypes = {
+    fetchData: PropTypes.func.isRequired,
+  };
+
+  HOComponent.displayName = `createInfoScreen(${getDisplayName(HOComponent)})`;
+
+  return connect(
+    mapStateToProps,
+    { fetchData },
+  )(HOComponent);
+};
+
+```
+
+优点：
+
+1. 可以在任何组件包括 Class Component 中工作
+2. 它所倡导的 容器组件与展示组件分离 原则做到了：关注点分离
+
+缺点：
+
+1. 不直观，难以阅读
+2. 名字冲突
+3. 组件层层层层层层嵌套
+
+### 3.3 Render Prop
+
+2017 年开始，Render Prop 流行了起来
+
+Render Prop 采用了 '代理模式' 来复用代码
+
+```jsx
+class WindowWidth extends React.Component {
+  propTypes = {
+    children: PropTypes.func.isRequired
+  }
+
+  state = {
+    windowWidth: window.innerWidth,
+  }
+
+  onResize = () => {
+    this.setState({
+      windowWidth: window.innerWidth,
+    })
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.onResize)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+  }
+
+  render() {
+    return this.props.children(this.state.windowWidth);
+  }
+}
+
+const MyComponent = () => {
+  return (
+    <WindowWidth>
+      {width => <div>Window width is: {width}</div>}
+    </WindowWidth>
+  )
+}
+```
+
+React Router 也采用了这样的API设计：
+
+```jsx
+<Route path = "/about" render= { (props) => <About {...props} />}>
+```
+
+优点：
+
+1. 灵活
+
+缺点：
+
+1. 难以阅读，难以理解
+
+### 3.4 Hook
+
+2018 年，React 团队宣布推出一种全新的重用代码的方式 - React Hook
+
+它的核心改变是：允许函数式组件存储自己的状态，在这之前函数式组件是不能有自己的状态的
+
+这个改变使我们可以像抽象一个普通函数一样抽象React组件中的逻辑
+
+实现的原理：闭包
+
+```jsx
+import { useState, useEffect } from "react";
+
+const useWindowsWidth = () => {
+  const [isScreenSmall, setIsScreenSmall] = useState(false);
+
+  let checkScreenSize = () => {
+    setIsScreenSmall(window.innerWidth < 600);
+  };
+  useEffect(() => {
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  return isScreenSmall;
+};
+
+export default useWindowsWidth;
+```
+
+```jsx
+import React from 'react'
+import useWindowWidth from './useWindowWidth.js'
+
+const MyComponent = () => {
+  const onSmallScreen = useWindowWidth();
+
+  return (
+    // Return some elements
+  )
+}
+```
+
+优点：
+
+1. 提取逻辑出来非常容易
+2. 非常易于组合
+3. 可读性非常强
+4. 没有名字冲突问题
+
+缺点：
+
+1. Hook有自身的用法限制: 只能在组件顶层使用，只能在组件中使用
+2. 由于原理为闭包，所以极少数情况下会出现难以理解的问题
