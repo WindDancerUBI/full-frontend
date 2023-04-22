@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkfull_frontend=self.webpackChunkfull_frontend||[]).push([[4121],{8070:l=>{l.exports=JSON.parse('[{"label":"CSS","permalink":"/full-frontend/docs/tags/css","count":12},{"label":"JS","permalink":"/full-frontend/docs/tags/js","count":8},{"label":"React","permalink":"/full-frontend/docs/tags/react","count":12}]')}}]);
