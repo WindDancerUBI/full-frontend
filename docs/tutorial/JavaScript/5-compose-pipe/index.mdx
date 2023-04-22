@@ -1,0 +1,186 @@
+---
+sidebar_position: 5
+tags: 
+  - JS
+---
+
+# 五、compose、pipe、链式编程
+
+## 5.1 compose
+compose函数可以将需要嵌套执行的函数平铺，嵌套执行就是一个函数的返回值将作为另一个函数的参数。可以参考如下的一个代码：
+```js
+function multiplyTwo(num) {
+  return num * 2;
+}
+function minusOne(num) {
+  return num - 1;
+}
+function addTwo(num) {
+  return num + 2;
+}
+function addThree(num) {
+  return num + 3;
+}
+
+let num = 1
+const result = minusOne(multiplyTwo(addThree(addTwo(10))))
+console.log(result)
+```
+该代码需要一次执行一系列的运算，并将前一个计算的结果作为参数传到下一个计算中去。实现它本身并不难，但是上述写法看起来不优雅，而且可读性很差。因此我们可以创建一个compose函数，将这些计算方法组合起来，代码如下所示：
+```js
+/**
+ * 简单的compose函数，从右向左执行
+ * @param  {...Function} fn 多个函数
+ * @returns 
+ */
+function compose(...fn) {
+  // 使用结构传值的fn是数组，使用内置的参数arguments是个对象
+  const fns = Array.prototype.slice.call(arguments)
+  const length = fns.length
+  return function(num) {
+    let result = num
+    for (let i = length - 1; i >= 0; i--) {
+      result = fns[i](result) 
+    }
+    return result
+  }
+}
+
+console.log(compose(minusOne, multiplyTwo, addThree, addTwo)(10))
+```
+Compose函数可以理解为为了方便我们连续执行方法，把自己调用传值得过程封装了起来，我们只需要给compose函数我们要执行哪些方法，他会自动得执行。
+为了和连续调用一系列的方法在直觉上保持一致，compose方法参数中的函数是从右向左一次执行的。
+## 5.2 pipe
+pipe函数跟compose函数的作用是一样的，也是将参数平铺，只不过他的顺序是从左往右。
+```js
+function multiplyTwo(num) {
+  return num * 2;
+}
+function minusOne(num) {
+  return num - 1;
+}
+function addTwo(num) {
+  return num + 2;
+}
+function addThree(num) {
+  return num + 3;
+}
+
+/**
+ * 简单的pipe函数，从左向右执行
+ * @param  {...Function} fn 多个函数
+ * @returns 
+ */
+function pipe(...fn) {
+  // 使用结构传值的fn是数组，使用内置的参数arguments是个对象
+  const fns = Array.prototype.slice.call(arguments)
+  const length = fns.length
+  return function(num) {
+    let result = num
+    for (let i = 0; i < length; i++) {
+      result = fns[i](result) 
+    }
+    return result
+  }
+}
+
+console.log(pipe(minusOne, multiplyTwo, addThree, addTwo)(10))
+
+```
+pipe可以理解为流水线执行的方法，当执行完当前函数后，再去执行下一个函数。它的顺序就是从左向右执行。
+学习了compose和pipe函数后，我们可以实现一下koa的洋葱模型。所谓的洋葱模型就是值koa的中间件执行的模式。koa的中间件从左向右依次执行，但是在执行时遇到next()时将停止执行当前中间件，转而去执行下一个中间件。当后面的步骤执行完时，再回过头来执行完当前中间件后面的东西。用代码实现如下：
+```js
+// 实现koa的洋葱模型
+async function func_1(next) {
+  console.log("func_1 start");
+  await next();
+  console.log("func_1 end");
+}
+
+async function delay(interval) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      console.log(`定时器执行完毕，用${interval}s`);
+      resolve();
+    }, interval);
+  });
+}
+
+async function func_2(next) {
+  console.log("func_2 start");
+  await delay(1000);
+  await next();
+  console.log("func_2 end");
+}
+
+async function func_3(next) {
+  console.log("func_3 start");
+  console.log("func_3 end");
+}
+
+function koaCompose(middlewares) {
+  return function () {
+    return dispatch(0);
+    function dispatch(index) {
+      const fn = middlewares[index];
+      if (!fn) {
+        console.log("执行完毕");
+        return Promise.resolve();
+      }
+      return Promise.resolve(
+        fn(function next() {
+          return dispatch(index + 1);
+        })
+      );
+    }
+  };
+}
+
+const koaFunc = koaCompose([func_1, func_2, func_3]);
+koaFunc();
+```
+代码运行结果如下：
+```
+func_1 start
+func_2 start
+定时器执行完毕，用1000s
+func_3 start
+func_3 end
+func_2 end
+func_1 end
+```
+## 5.3 链式调用
+链式调用是一种很常见的函数调用方式。大名鼎鼎的jquery和d3等第三方库都采用了链式调用。其好处是，整个调用过程看起来非常的清晰，利于读者明白代码的执行逻辑。
+接下来实现一个简单的链式调用。对于链式调用最重要的点就是在调用玩函数后要返回正确的上下文，通过该上下文可以找到接下来要调用的函数。代码如下所示：
+```js
+// 创建一个链式调用函数
+function Person(name, age) {
+  this.name = name
+  this.age = age
+
+  console.log(`${this.name}今年${this.age}岁`)
+
+  this.getUp = function(time) {
+    console.log(`${time}点起床`)
+    return this
+  }
+
+  this.eat = function(time) {
+    console.log(`${time}点吃饭`)
+    return this
+  }
+
+  this.work = function(time) {
+    console.log(`${time}点吃饭`)
+    return this
+  }
+
+  this.sleep = function(time) {
+    console.log(`${time}点睡觉`)
+    return this
+  }
+}
+
+const person = new Person("小明", 29)
+person.getUp(8).eat(9).work(10).sleep(23)
+```

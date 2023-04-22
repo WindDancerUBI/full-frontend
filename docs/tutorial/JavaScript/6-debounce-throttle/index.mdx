@@ -1,0 +1,104 @@
+---
+sidebar_position: 6
+tags: 
+  - JS
+---
+
+# 六、防抖与节流
+
+## 6.1 防抖
+### 6.1.1 为什么要防抖
+有的操作是高频触发的，但是其实触发一次就好了，比如我们短时间内多次缩放页面，那么我们不应该每次缩放都去执行操作，应该只做一次就好。在比如监听输入框输入，不应该每次都去触发监听，应该是用户完成一段输入后，再进行触发。简而言之，就是等用户高频事件完了，再进行事件操作。
+### 6.1.2 防抖要怎么做
+防抖的步骤如下所示：
+1. 事件触发，开启一个定时器
+2. 如果再次触发，则清除上一次的，重写开一个
+3. 定时到，触发操作
+用代码来表述就是：
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input id="inputRef"></input>
+  <p id="textRef">输入的文字为：</p>
+  <script>
+    const inputDom = document.getElementById("inputRef")
+    function debounce(callback, time) {
+      let timer = null;
+      return function () {
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+          callback.apply(this, arguments)
+        }, time)
+      }
+    }
+    // 不设置防抖的事件
+    // inputDom.oninput = function(event) {
+    //   const textDom = document.getElementById("textRef")
+    //   textDom.innerHTML = `输入的文字为：${event.target.value}`
+    // }
+    inputDom.oninput = debounce(function (event) {
+      const textDom = document.getElementById("textRef")
+      textDom.innerHTML = `输入的文字为：${event.target.value}`
+    }, 1000)
+  </script>
+</body>
+</html>
+```
+## 6.2 节流
+### 6.2.1 为什么要节流
+防抖存在一个问题，事件会一直到等到用户完成操作后一段事件再操作。如果一直操作，会一直不触发。如果这是一个按钮，点击就发送请求。如果一直点，那么请求就会一直不发出去。这里的正确思路应该是第一次点击就发送，然后上一个请求回来后，才能再发。简而言之，就是某个操作希望上一次的完成后再进行下一次，或者说希望隔一定时间触发一次
+### 6.2.2 节流要怎么做
+1. 事件触发时，操作执行并关闭阀门
+2. 阀门关闭，后续触发无效
+3. 一定时间后，阀门打开，这时操作可再次触发
+4. 然后从第1步开始继续执行步骤
+用代码描述如下：
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<input id="inputRef"></input>
+<p id="textRef">输入的文字为：</p>
+<script>
+  const inputDom = document.getElementById("inputRef")
+  function throttle(callback, time) {
+    let valid = true;
+    return function () {
+      if (valid) {
+        callback.apply(this, arguments); // 立即执行一次
+        setTimeout(() => {
+          // callback.apply(this, arguments); // 延迟执行一次
+          valid = true;
+        }, time)
+        valid = false;
+      } else {
+        return false;
+      }
+    }
+  }
+  inputDom.oninput = throttle(function (event) {
+    const textDom = document.getElementById("textRef")
+    textDom.innerHTML = `输入的文字为：${event.target.value}`
+  }, 1000)
+</script>
+</body>
+</html>
+```
+
+- 防抖和节流都是为了阻止操作高频触发，从而浪费性能。
+- 防抖是让你多次触发，只生效最后一次。适用于我们只需要一次触发生效的场景
+- 节流是让你的操作，每隔一段时间才能触发一次。适用于我们多次触发要多次生效的场景
+

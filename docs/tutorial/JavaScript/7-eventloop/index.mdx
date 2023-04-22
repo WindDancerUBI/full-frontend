@@ -1,0 +1,187 @@
+---
+sidebar_position: 7
+tags: 
+  - JS
+---
+
+import BrowserWindow from '@site/src/components/BrowserWindow';
+
+# 七、事件循环
+
+Event Loop即事件循环，是浏览器或Node解决单线程运行时不会阻塞的一种机制。
+## 7.1 浏览器的eventloop
+### 7.1.1 浏览器线程
+
+JavaScript是一门单线程语言，但是浏览器UI是多线程的.异步任务借助浏览器的线程和JavaScript的执行机制实现。
+- GUI渲染线程：绘制页面，解析HTML、CSS，构建DOM树等；页面的重绘和重排；与JS引擎互斥(JS引擎阻塞页面刷新)。
+- JS引擎线程：js脚本代码执行；负责执行准备好的事件，例如定时器计时结束或异步请求成功且正确返回；与GUI渲染线程互斥
+- 事件触发线程：当对应的事件满足触发条件，将事件添加到js的任务队列末尾；多个事件加入任务队列需要排队等待。
+- 定时器触发线程：负责执行异步的定时器类事件：setTimeout、setInterval等；浏览器定时计时由该线程完成，计时完毕后将事件添加至任务队列队尾
+- HTTP请求线程：负责异步请求；当监听到异步请求状态变更时，如果存在回调函数，该线程会将回调函数加入到任务队列队尾
+
+### 7.1.2 eventloop执行流程
+
+1. 代码开始执行，创建一个全局调用栈，script作为宏任务执行；
+2. 执行过程过同步任务立即执行，异步任务根据异步任务类型分别注册到微任务队列和宏任务队列；
+3. 同步任务执行完毕，查看微任务队列；
+	- 若存在微任务，将微任务队列全部执行(包括执行微任务过程中产生的新微任务)；
+	- 若无微任务，查看宏任务队列，执行第一个宏任务，宏任务执行完毕，查看微任务队列，重复上述操作，直至宏任务队列为空。
+
+浏览器中的宏任务有：I/O、setTimeout、setInterval、requestAnimationFrame。
+浏览器中的微任务有：MutationObserver、Promise.then
+eventloop的执行流程，可以通过下面的代码来分析：
+```js
+console.log("1");
+setTimeout(function() {
+  console.log("2");
+}, 0);
+Promise.resolve().then(function() {
+  console.log("3");
+});
+console.log("4");
+
+console.log("start");
+
+setTimeout(() => {
+  console.log("setTimeout");
+  new Promise(resolve => {
+    console.log("promise inner1");
+    resolve();
+  }).then(() => {
+    console.log("promise then1");
+  });
+}, 0);
+
+new Promise(resolve => {
+  console.log("promise inner2");
+  console.log("5")
+}).then(() => {
+  console.log("promise then2");
+});
+```
+
+执行结果如下：
+
+<BrowserWindow>
+
+```
+1
+4
+start
+promise inner2
+3
+promise then2
+2
+setTimeout
+promise inner1
+promise then1
+```
+
+</BrowserWindow>
+
+:::tip 分析
+1. 首先执行同步代码console.log("1")、console.log("4")、console.log("start")、console.log("promise inner2")、对于promise而言，它的内部代码是同步代码；只有then、catch、finally中的代码才是微任务。
+2. 之后执行微任务，主要是promise then、catch、finally中的代码。因此分别执行console.log("3")、console.log("promise then2")。
+3. 接下来执行宏任务，这里主要是settimeout中的代码。由于设置的都是0，因此第一个settimeout先执行完输出console.log("2")；第二个settimeout先执行同步代码console.log("setTimeout")、console.log("promise inner1")；最后在执行微任务promise then中的代码console.log("promise then1")。
+:::
+
+## 7.2 NodeJS的eventloop
+### 7.2.1 NodeJS事件循环
+NodeJS的事件循环机制和浏览器端有较大的区别。Node中也有宏任务和微任务，但是区别如下：
+浏览器中的宏任务有：I/O、setTimeout、setInterval、setImmediate。
+浏览器中的微任务有：process.nextTick、Promise.then。
+NodeJS官网给出的事件循环操作顺序的概览如下：
+```
+   ┌───────────────────────────┐
+┌─>│           timers          │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+│  │     pending callbacks     │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+│  │       idle, prepare       │
+│  └─────────────┬─────────────┘      ┌───────────────┐
+│  ┌─────────────┴─────────────┐      │   incoming:   │
+│  │           poll            │<─────┤  connections, │
+│  └─────────────┬─────────────┘      │   data, etc.  │
+│  ┌─────────────┴─────────────┐      └───────────────┘
+│  │           check           │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+└──┤      close callbacks      │
+   └───────────────────────────┘
+```
+1. timers 阶段: 这个阶段执行 setTimeout(callback) 和 setInterval(callback) 预定的 callback;
+ 2. I/O callbacks 阶段: 此阶段执行某些系统操作的回调，例如TCP错误的类型。 例如，如果TCP套接字在尝试连接时收到 ECONNREFUSED，则某些* nix系统希望等待报告错误。 这将操作将等待在I/O回调阶段执行;
+ 3. idle, prepare 阶段: 仅node内部使用;
+ 4. poll 阶段: 获取新的I/O事件, 例如操作读取文件等等，适当的条件下node将阻塞在这里;
+ 5. check 阶段: 执行 setImmediate() 设定的callbacks;
+ 6. close callbacks 阶段: 比如 socket.on(‘close’, callback) 的callback会在这个阶段执行;
+### 7.2.2 nextTick 与 setImmediate
+NodeJS的宏任务与微任务相比多出了nextTick 与 setImmediate。
+1. process.nextTick 不属于事件循环的任何一个阶段，它属于该阶段与下阶段之间的过渡, 即本阶段执行结束, 进入下一个阶段前, 所要执行的回调。有给人一种插队的感觉.
+2. setImmediate 的回调处于check阶段, 当poll阶段的队列为空, 且check阶段的事件队列存在的时候，切换到check阶段执行.
+	- 如果在一个I/O周期内进行调度，setImmediate() 将始终在任何定时器（setTimeout、setInterval）之前执行。
+	- setImmediate()被设计在 poll 阶段结束后立即执行回调；
+	- setTimeout()被设计在指定下限时间到达后执行回调；
+NodeJS的时间循环，可以通过下面的代码来分析：
+
+```js
+async function async1(){
+  console.log('async1 start')
+  await async2()
+  console.log('async1 end')
+}
+async function async2(){
+  console.log('async2')
+}
+console.log('script start')
+setTimeout(function(){
+  console.log('setTimeout0') 
+},0)  
+setTimeout(function(){
+  console.log('setTimeout3') 
+},3)  
+setImmediate(() => console.log('setImmediate'));
+process.nextTick(() => console.log('nextTick'));
+async1();
+new Promise(function(resolve){
+  console.log('promise1')
+  resolve();
+  console.log('promise2')
+}).then(function(){
+  console.log('promise3')
+})
+console.log('script end')
+```
+
+执行结果如下：
+
+<BrowserWindow>
+
+```
+script start
+async1 start
+async2
+promise1
+promise2
+script end
+nextTick
+async1 end
+promise3
+setTimeout0
+setImmediate
+setTimeout3
+```
+
+</BrowserWindow>
+
+:::tip 分析
+1. 首先NodeJS会在一个事件循环的开始时，检测定时器，并将它们放到其它进程中去执行。
+2. 之后开始执行同步代码console.log('script start')；到达异步async1()执行时，先将它的同步代码console.log('async1 start')、console.log('async2')执行。之后会等待await的结果。然后执行promise中的同步代码console.log('promise1')、 console.log('promise2')。接着往下执行同步代码console.log('script end')。自此同步代码执行完毕。
+3. 接着进入poll阶段，该阶段本应将执行队列中的一些异步代码。但由于nextTick的存在，将插队执行它的回调console.log('nextTick')。然后执行异步函数的console.log('async1 end')以及promise then的console.log('promise3')。
+4. 然后进入下一个事件循环。同时有setTimeout和setImmediate，但是它们都是在主程序中的。而不是在同一个I/O内，因此它们的执行顺序是不固定的。由于第一个setTimeout间隔为0秒，因此它大概率在上一个事件循环中就已经达到预定时间，所以它的回调函数被执行。第二个setTimeout预定时间是3，由于我的笔记本速度很快。所以它在上一个事件循环中是没有达到预期时间的。所以来到poll阶段时。队列是空的。因此将进入到check阶段执行setImmediate。
+5. 然后在进入到下下一个事件循环。此时第二个定时器中的回调函数被执行。如果你的电脑比较慢。那么第一个事件循环的用时可能会超过3ms。此时进入第二个事件循环时，两个定时器都已达到预期时间。此时setImmediate将最后执行，并且只使用了两个事件循环周期。
+:::
+
+

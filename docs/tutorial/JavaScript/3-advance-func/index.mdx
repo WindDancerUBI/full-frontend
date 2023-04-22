@@ -1,0 +1,118 @@
+---
+sidebar_position: 3
+tags: 
+  - JS
+---
+
+# 三、高阶函数
+
+## 3.1 什么是高阶函数
+### 3.1.1 高阶函数概念
+JavaScript的函数其实都指向某个变量。既然变量可以指向函数，函数的参数能接收变量，那么一个函数就可以接收另一个函数作为参数，这种函数就称之为高阶函数。
+高阶函数是对其他函数进行操作的函数，操作可以是将它们作为参数，或者返回它们。简单总结为高阶函数是一个接收函数作为参数或者将函数作为返回输出的函数。
+### 3.1.2 常见高阶函数
+比如数组提供的map方法就是一个高阶函数。map()(映射)方法最后生成一个新数组，不改变原始数组的值。其结果是该数组中的每个元素都调用一个提供的函数后返回的结果。
+array.map(callback,[ thisObject]);
+## 3.2 高阶函数的实现
+### 3.2.1 forEach
+Array.forEach()
+forEach的参数有两个，一个是回调函数，另一个是this的指向。
+回调函数有三个参数：数组当前项的值、数组当前项的索引、数组对象本身。
+forEach的实现代码如下，值得注意的是箭头函数和匿名函数作为回调函数是，thisArgs的值是不同的。箭头函数thisArgs指向的在node中是{}，在浏览器中是window。匿名函数thisArgs指向的是传入的对象本身
+```js
+Array.prototype.myForEach = function (callback, thisArgs) {
+  const len = this.length;
+  for (let i = 0; i < len; i++) {
+    // callback(this[i], i, this);
+    callback.call(thisArgs, this[i], i, this);
+  }
+};
+
+const array = [1, 2, 3, 4, 5, 6];
+// array.myForEach(
+//   (ele, index, arrSelf) => {
+//     console.log(ele, index, arrSelf, this);
+//   },
+//   // thisArgs 可选参数。当执行回调函数callback时，用作this的值。箭头函数和function的this指向是不同的
+//   { a: 9 }
+// );
+array.myForEach(
+  function (ele, index, arrSelf) {
+    console.log(ele, index, arrSelf, this);
+  },
+  // thisArgs 可选参数。当执行回调函数callback时，用作this的值。箭头函数和function的this指向是不同的
+  { a: 9 }
+);
+```
+### 3.2.2 map
+map的实现原理与forEach大致相同，区别在于map需要回调函数返回一个值，map将这些值存放到数组中，最后循环执行完毕后返回该数组。
+```js
+// map
+Array.prototype.myMap = function (callback, thisArgs) {
+  let len = this.length;
+  let result = [];
+  for (let i = 0; i < len; i++) {
+    const item = callback.call(thisArgs, this[i], i, this);
+    result.push(item);
+  }
+  return result;
+};
+
+const result_2 = array.myMap((v, i, arrSelf) => {
+  console.log(v, i, arrSelf);
+  return i * 2;
+});
+console.log("the result of map is:", result_2);
+```
+### 3.2.3 reduce
+reduce的实现原理稍显不同，它需要讲上一次回调函数返回的值作为下一次回调函数执行是的第一个参数。其代码试下如下所示：
+```js
+// reduce
+Array.prototype.myReducer = function(callback, initial) {
+  let pre = initial
+  const len = this.length
+  let i = 0
+  if (pre === undefined) {
+    pre = this[0]
+    i = 1
+  }
+  for (i; i < len; i++) {
+    pre = callback(pre, this[i], i)
+  }
+  return pre
+}
+const result_3 = array.myReducer((pre, val, index) => {
+  return pre + val
+}, 1)
+console.log("the result of reduce is:", result_3);
+```
+## 3.3 实现一个自定义高阶函数
+实现一个高阶函数本身是比较简单的，就是在必要时刻去调用传递过来的函数参数。下面是一个对象筛选的高阶函数，第一个参数是对象，第二个参数是回调函数它实现了如何筛选。
+值得注意的是编写自定义高阶函数是，需要对入参进行检验，同时规定好传给回调函数的参数。
+```js
+// myCustomFunc 我的自定义函数: 对象筛选
+function myCustomFunc(obj, fn) {
+  if (Object.prototype.toString.call(obj) !== "[object Object]") {
+    throw Error("myCustomFunc error: 第一个参数必须为对象")
+  }
+  const _obj = JSON.parse(JSON.stringify(obj))
+  const result = {}
+  for (const key in object) {
+    if (Object.hasOwnProperty.call(object, key)) {
+      const element = object[key];
+      if (fn(element, key)) {
+        result[key] = element
+      }
+    }
+  }
+  return result
+}
+const object = {
+  a: 1,
+  b: 2,
+  c: 3,
+  d: 4
+}
+const result_4 = myCustomFunc(object, (element, key) => element % 2 === 0)
+console.log("the result of myCustomFunc is:", result_4);
+```
