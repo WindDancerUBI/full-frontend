@@ -1,0 +1,187 @@
+---
+sidebar_position: 2
+tags: 
+  - Three
+---
+
+import { IframeWindow } from '@site/src/components/BrowserWindow';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# 二、Three.js的基本操作
+
+## 2.1 轨道控制器
+
+之前我们已经创建场景、相机、渲染器三要素，并且在场景中添加了一个几何体。但是现在我们仅仅只能观看这个几何体，而无法与它产生交互。为了与之交互，我们首先要做的就是加入轨道控制器。
+
+OrbitControls（轨道控制器）可以使得相机围绕目标进行轨道运动。通俗的将，使用了轨道控制器后，我们可以使用鼠标左键拖动相机移动；使用鼠标右键拖动相机旋转；使用鼠标滚轮控制相机的缩放。由于相机的状态发生了改变，反应到页面上就是物体发生了位移、缩放等现象。
+
+three.js源码examples中提供了轨道控制器方法，按照如下代码引入：
+
+```jsx
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+```
+
+创建轨道控制器的代码如下所示：
+
+```jsx
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true
+```
+
+当用鼠标拖拽、缩放时会导致相机的状态发生改变。所以每次改变都应当使用渲染器重新渲染，否则无法在页面上看到变化。在上一节中我们使用了`renderer.render(scene, camera)` 在每次浏览器尺寸变化时来重新渲染。但是这次相机状态的改变需要另一个事件来触发重新渲染。很显然我们不应当把精力过度放在每个要触发重新渲染的事件上，而是应当使用一个统一的方法来处理逻辑。幸运的是浏览器window对象原生提供了`requestAnimationFrame` 这个方法。
+
+浏览器存在屏幕刷新率，通常而言是60Hz。使用了`requestAnimationFrame` 就是告诉浏览器，你需要进行页面重绘，并在重绘前执行我在`requestAnimationFrame` 中传递给你的回调函数。因此我们可以使用创建一个render函数，在该函数内更改轨道控制器，并使用渲染器重新渲染。然后调用`requestAnimationFrame` 来告诉浏览器在下一个屏幕刷新率的时候继续执行该render函数。
+
+```tsx
+function render() {
+  controls.update();
+  renderer.render(scene, camera);
+  // 渲染下一帧的时候就会调用render函数
+  requestAnimationFrame(render);
+}
+```
+
+## 2.2 画布的全屏和退出
+
+除了使用轨道控制器外，3d物体的交互还有全屏展示。有的网站3d物体只存在于页面的的一小块区域里，通常这些网站会提供全屏展示物体的功能。全屏的功能由渲染器render提供，通过调用`renderer.domElement.requestFullscreen` 可以实现全屏。而退出全屏的功能则由浏览器原生提供，通过调用`document.exitFullscreen` 即可退出全屏。同时，浏览器还提供了当前是否为全屏的API，通过判断`document.fullscreenElement` ，即可实现全屏与退出全屏的切换。通过双击来实现全屏与退出全屏的切换，代码如下：
+
+```tsx
+window.addEventListener("dblclick", () => {
+  const fullscreenElement = document.fullscreenElement;
+  if (!fullscreenElement) {
+    // 让画布对象全屏
+    renderer.domElement.requestFullscreen();
+  } else {
+    // 退出全屏，使用document对象
+    document.exitFullscreen();
+  }
+});
+```
+
+## 2.3 改变物体的状态
+
+轨道控制器虽然能改变物体在页面上显示的位置，但是这种改变只是视角的改变，画布上个物体之间的相对位置是没有改变的。而要真正改变物体的位置或其他状态，则必须对物体本身进行操作。
+
+在进行操作之前，首先引入辅助坐标的概念。**AxesHelper**用于简单模拟3个坐标轴的对象。红色代表 X 轴、绿色代表 Y 轴、蓝色代表 Z 轴。它的使用也非常简单，只需要创建一个对象，然后将其添加到场景中即可。
+
+```tsx
+/** ---添加坐标辅助--- */
+axesHelper = new THREE.AxesHelper(5);
+scene.add(axesHelper);
+```
+
+有了辅助坐标系作为参考后，我们就可以对物体的属性进行修改，这样就能显示出物体相对坐标系的位置、大小等状态的改变。相关代码如下所示
+
+```tsx
+/** --- 物体移动 --- */
+// 修改物体的位置
+// mesh.position.set(2, 2, 2);
+mesh.position.x = 3;
+// 缩放
+// mesh.scale.set(1, 2, 3);
+mesh.scale.y = 1.5;
+// 旋转
+mesh.rotation.set(Math.PI / 4, 0, 0, "XZY");
+```
+
+以上三节的效果如下所示：
+
+<IframeWindow url="/threejs-tutorial/2-basicOption/objectOption.html" />
+
+## 2.4 使用Clock制作动画
+
+上一节使用了修改物体的位置、大小、旋转等属性来使物体发生位移、缩放等，但是这个过程是一次性的。在实际生产中，我们需要对物体做一些动画，使它自己随着时间的退役不断的发生位移、缩放等。Three.js提供了Clock对象以供我们来实现动画。
+
+Clock对象提供start方法来开启时钟；stop方法来关闭时钟；getElapsedTime方法来获取从启动时钟开始到现在所经历的时间。使用以上三个方法，我们可以实现一个简单的动画。动画在render方法中处理，代码如下：
+
+```tsx
+/** ---创建时钟--- */
+clock = new THREE.Clock();
+clock.start();
+
+/** other codes */
+
+render();
+function render() {
+  controls.update();
+  renderer.render(scene, camera);
+  /** --- 制作动画 --- */
+  const time = clock.getElapsedTime();
+  const offSet = time % 5;
+  if (time > 25) {
+    // 循环5次后关闭时钟
+    mesh.position.x = 0;
+    mesh.position.y = 0;
+    clock.stop();
+  } else {
+    mesh.position.x = offSet;
+    mesh.position.y = offSet;
+  }
+  // 渲染下一帧的时候就会调用render函数
+  requestAnimationFrame(render);
+}
+```
+
+运行代码，物体会沿着45°角移动5次后关闭动画。实际生产中，可能会有很多复杂的动画，这时候用Clock就不那么方便了，这里可以考虑第三方动画库比如`gsap` 、`Anime` 等。使用这些动画库的核心就是将three.js场景中的各种对象的属性值改变，并在页面重绘时使用这些新属性，从而产生动画。
+
+本节的效果如下所示：
+
+<IframeWindow url="/threejs-tutorial/2-basicOption/animation.html" />
+
+## 2.5 图形界面工具
+
+很显然上面的动画只是单纯的做一个展示的功能，实际生产中还会有用户自己操作的需求。这个时候就需要图形界面工具了，用户通过设置图形界面工具上的参数，可以使3d物体按照自己的意愿来改变。这种图形界面工具已经有很多封装好的了，比如`dat.gui`、`lil-gui` 等。它们的使用方法大同小异，这里就选择`lil-gui` 作为图形界面工具，它也是three.js官方examples里使用的gui工具。
+
+首先安装lil-gui，它自带了ts类型声明。
+
+```bash
+yarn add lil-gui
+```
+
+ 它的使用方法很简单，首先创建一个实例。它有三种方法，`add`、`addColor`和`addFolder`。
+
+- add接收两个参数，第一个是对象，第二个是对象的属性。例如我们要改变mesh的显隐的话，第一个参数就传mesh对象，第二参数传mesh对象的属性visible。在gui工具中我们通过勾选，就可以改变mesh的visible属性，从而可以控制物体的显隐。add是一个链式函数，我们不断地添加min、name、max、step等方法以应对不同的改变属性的操作方式；
+- addFolder用于创建一个文件夹。在addFolder这个对象里可以通过继续调用add来添加要操作的属性。通常我们将需要改变的同类型属性放到一个文件夹下，比如下面创建一个文件夹专门用来操作各种poistion属性，在这个文件夹下，可以操作物体的x、y、z的属性;
+- addColor同add一样接收两个属性：对象与对象的属性。与add不同的是它是专门用来修改颜色的，点击它会出现一个颜色选择器。我们可以使用它来改变物体的颜色，这里第一个参数就传对象mesh.material，第二个参数传属性color。值得注意的是，color这个属性是只读属性，单纯的在gui工具中选择颜色并不会改变物体的颜色，因此还需要在onChange回调中通过material.color.set来改变物体颜色。
+
+```tsx
+import GUI from "lil-gui";
+
+/** ---创建图形界面工具--- */
+const panel = new GUI();
+panel
+  .add(mesh, "visible")
+  .name("显示物体")
+  .onChange(() => console.log(`当前物体是否显示：${mesh.visible}`));
+panel
+  .addColor(mesh.material, "color")
+  .name("改变物体颜色")
+  .onChange((v) => {
+    const material = mesh.material
+    material.color.set(v)
+  });
+const positionPanel = panel.addFolder("移动物体位置");
+positionPanel
+  .add(mesh.position, "x")
+  .min(0)
+  .max(5)
+  .step(0.01)
+  .name("移动x轴");
+positionPanel
+  .add(mesh.position, "y")
+  .min(0)
+  .max(5)
+  .step(0.01)
+  .name("移动y轴");
+positionPanel
+  .add(mesh.position, "z")
+  .min(0)
+  .max(5)
+  .step(0.01)
+  .name("移动z轴");
+```
+
+本节的效果如下所示：
+
+<IframeWindow url="/threejs-tutorial/2-basicOption/guiTools.html" />
